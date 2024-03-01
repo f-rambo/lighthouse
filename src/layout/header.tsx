@@ -7,7 +7,7 @@ import {
   DropdownMenuContent,
   DropdownMenu,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { User } from "@nextui-org/react";
 
 export default function HeaderComponent() {
   return (
@@ -17,21 +17,15 @@ export default function HeaderComponent() {
           <div className="relative">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button className="rounded-full" size="icon" variant="ghost">
-                  <Avatar
+                <Button variant="ghost">
+                  <User
                     className="rounded-full"
-                    style={{
-                      aspectRatio: "32/32",
-                      objectFit: "cover",
+                    name="Jane Doe"
+                    description="Product Designer"
+                    avatarProps={{
+                      src: "https://github.com/shadcn.png",
                     }}
-                  >
-                    <AvatarImage
-                      src="https://github.com/shadcn.png"
-                      alt="@shadcn"
-                    />
-                    <AvatarFallback>CN</AvatarFallback>
-                  </Avatar>
-                  <span className="sr-only">Toggle user menu</span>
+                  />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">

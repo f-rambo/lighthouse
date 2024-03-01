@@ -6,25 +6,12 @@ const appApi = `${process.env.NEXT_PUBLIC_API ?? ""}${
 }app`;
 const tokenKey = process.env.NEXT_PUBLIC_TOKEN ?? "ocean-token";
 
-interface AppReq {
-  id: string;
-  page: number;
-  page_size: number;
-  name: string;
-  app_type_id: number;
-}
-
 interface FileUploadRequest {
   icon: string;
   file_name: string;
   chunk: string;
   resume: boolean;
   finish: boolean;
-}
-
-interface AppType {
-  id: string;
-  name: string;
 }
 
 export const AppstoreService = {
@@ -38,7 +25,7 @@ export const AppstoreService = {
     });
     return handlerResponse(res);
   },
-  async getList(appReq: AppReq) {
+  async getList(appReq: any) {
     const token = Cookies.get(tokenKey);
     const cleanedAppReq = Object.fromEntries(
       Object.entries(appReq).filter(

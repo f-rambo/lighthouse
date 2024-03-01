@@ -9,11 +9,11 @@ export default function HomePage() {
   }, [router]);
 }
 
-// /**
-//  * v0 by Vercel.
-//  * @see https://v0.dev/t/rvUZioAyCGg
-//  * Documentation: https://v0.dev/docs#integrating-generated-code-into-your-nextjs-app
-//  */
+/**
+ * v0 by Vercel.
+ * @see https://v0.dev/t/rvUZioAyCGg
+ * Documentation: https://v0.dev/docs#integrating-generated-code-into-your-nextjs-app
+ */
 // import Link from "next/link";
 // import { Badge } from "@/components/ui/badge";
 // import { Input } from "@/components/ui/input";

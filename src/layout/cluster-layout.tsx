@@ -31,7 +31,7 @@ let menu = [
   {
     title: "App Repositories",
     icon: GlobeIcon,
-    path: "/cluster/app-repo",
+    path: "/cluster/apprepo",
   },
   {
     title: "Users",
@@ -58,7 +58,7 @@ const Layout = ({ children }: ChildContainerProps) => {
             <div className="flex h-[60px] items-center px-6">
               <Link className="flex items-center gap-2 font-semibold" href="/">
                 <BackpackIcon className="h-6 w-6" />
-                <span className="">Acme Inc</span>
+                <span className="">Ocean</span>
               </Link>
             </div>
             <div className="flex-1">

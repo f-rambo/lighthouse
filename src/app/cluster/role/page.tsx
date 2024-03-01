@@ -1,3 +1,5 @@
-export default function Role() {
-  return <div>Role page</div>;
+"use client";
+
+export default function Component() {
+  return <div>hhhh</div>;
 }

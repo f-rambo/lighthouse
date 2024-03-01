@@ -14,15 +14,17 @@ import {
   DropdownMenuItem,
   DropdownMenuContent,
   DropdownMenu,
-  DropdownMenuLabel,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import {
-  HomeIcon,
-  BookOpenIcon,
-  LayoutPanelLeftIcon,
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   MoreHorizontalIcon,
   GithubIcon,
   GitBranchIcon,
@@ -39,54 +41,72 @@ import {
   DialogTrigger,
   DialogClose,
 } from "@/components/ui/dialog";
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
 import { Label } from "@/components/ui/label";
-import {
-  AppType,
-  App,
-  AppVersion,
-  Metadata,
-  Maintainer,
-  Dependency,
-} from "@/types/types";
+import { App } from "@/types/types";
 import { AppstoreService } from "@/services/app/v1alpha1/app";
 import { useToast } from "@/components/ui/use-toast";
 import { PageComponent } from "@/components/pagination";
+import { useRouter, useSearchParams } from "next/navigation";
+import Image from "next/image";
 
 function MyIcon({ iconName }: { iconName: keyof typeof IconMap }) {
+  if (iconName.includes("https://")) {
+    return (
+      <Image
+        className="w-8 h-8"
+        src={iconName}
+        alt="icon"
+        width={60}
+        height={60}
+      />
+    );
+  }
   if (!iconName) {
-    return <HomeIcon className="w-8 h-8" />;
+    return <GithubIcon className="w-8 h-8" />;
   }
   const Icon = IconMap[iconName];
   if (!Icon) {
-    return <HomeIcon className="w-8 h-8" />;
+    return <GithubIcon className="w-8 h-8" />;
   }
   return <Icon className="w-8 h-8" />;
 }
 
 export default function AppPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const repositorieid = searchParams.get("repositorieid");
   const { toast } = useToast();
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
   const [pageCount, setPageCount] = useState(0);
   const [apps, setApps] = useState<App[]>([]);
   const [icon, setIcon] = useState("home");
+  const [repoApps, setRepoApps] = useState<App[]>([]);
+  const pageSize = 9;
+
+  const repoAppList = useCallback(() => {
+    AppstoreService.appRepoApps(repositorieid as string).then((data) => {
+      if (data instanceof Error) {
+        toast({
+          title: "app items fail",
+          variant: "destructive",
+          description: data.message,
+        });
+        return;
+      }
+      setRepoApps(data.items as App[]);
+    });
+  }, [toast, repositorieid]);
 
   const refreshAppList = useCallback(() => {
+    let paramPage = page;
+    if (paramPage < 1) {
+      paramPage = 1;
+    }
     AppstoreService.getList({
-      id: "",
-      page: page,
-      page_size: 9,
+      page: paramPage,
+      page_size: pageSize,
       name: search,
-      app_type_id: 0,
     }).then((data) => {
       if (data instanceof Error) {
         toast({
@@ -102,8 +122,43 @@ export default function AppPage() {
   }, [page, search, toast]);
 
   useEffect(() => {
-    refreshAppList();
-  }, [refreshAppList]);
+    if (!repositorieid || repositorieid === "") {
+      refreshAppList();
+      return;
+    }
+    if (repoApps.length === 0) {
+      repoAppList();
+    }
+    let paramPage = page;
+    if (paramPage < 1) {
+      paramPage = 1;
+    }
+    let appItems = repoApps;
+    appItems.sort((a: App, b: App) => {
+      return a.name < b.name ? -1 : 1;
+    });
+    if (search !== "") {
+      paramPage = 1;
+      appItems = appItems.filter((app: App) =>
+        app.name.includes(search)
+      ) as App[];
+    }
+    let startIndex = (paramPage - 1) * pageSize;
+    let endIndex = paramPage * pageSize;
+    if (endIndex > appItems.length) {
+      endIndex = appItems.length;
+    }
+    setApps(appItems.slice(startIndex, endIndex));
+    setPageCount(Math.ceil(appItems.length / pageSize));
+  }, [
+    repoAppList,
+    refreshAppList,
+    page,
+    search,
+    toast,
+    repositorieid,
+    repoApps,
+  ]);
 
   const handlePackageFileUpload = () => {
     const fileInput = document.getElementById(
@@ -160,14 +215,14 @@ export default function AppPage() {
   };
 
   const appNotfound = (
-    <div className="flex items-center justify-center w-full h-64 text-gray-500 dark:text-gray-400">
-      <span>No app found</span>
+    <div className="h-24 text-center">
+      <span>No results.</span>
     </div>
   );
 
   return (
     <div className="flex flex-col w-full min-h-screen">
-      <main className="flex min-h-[calc(100vh_-_theme(spacing.16))] bg-gray-100/40 flex-1 flex-col gap-4 p-4 md:gap-8 md:p-10 dark:bg-gray-800/40">
+      <main className="flex min-h-[calc(100vh_-_theme(spacing.16))]  flex-1 flex-col gap-4 p-4 md:gap-8 md:p-10">
         <div className="max-w-6xl w-full mx-auto flex items-center gap-4">
           <div className="flex-1">
             <Input
@@ -187,27 +242,24 @@ export default function AppPage() {
                 <DialogDescription>Upload helm archive *.tgz</DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline">Select Icon</Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-56">
-                    <DropdownMenuLabel>Icon items</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuRadioGroup
-                      id="icon"
-                      value={icon}
-                      onValueChange={setIcon}
-                    >
+                <Select onValueChange={setIcon}>
+                  <SelectTrigger className="sm:max-w-[425px]">
+                    <SelectValue placeholder="Select a icon" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectLabel>icons</SelectLabel>
                       {Object.entries(IconMap).map(([name, IconComponent]) => (
-                        <DropdownMenuRadioItem key={name} value={name}>
-                          <IconComponent />
-                          <span className="ml-3">{name}</span>
-                        </DropdownMenuRadioItem>
+                        <SelectItem key={name} value={name}>
+                          <div className="flex items-center">
+                            <IconComponent />
+                            <span className="ml-3">{name}</span>
+                          </div>
+                        </SelectItem>
                       ))}
-                    </DropdownMenuRadioGroup>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
                 <div className="grid w-full max-w-sm items-center gap-1.5">
                   <Label htmlFor="package">Package</Label>
                   <Input id="package" type="file" accept=".tgz" />
@@ -224,10 +276,11 @@ export default function AppPage() {
           </Dialog>
         </div>
 
+        {apps.length === 0 && appNotfound}
+
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 max-w-6xl w-full mx-auto">
-          {apps.length === 0 && appNotfound}
           {apps.map((app) => (
-            <Card key={app.id}>
+            <Card key={app.id} className="bg-gray-100/20">
               <CardHeader className="flex flex-row items-center gap-4">
                 {MyIcon({ iconName: app.icon as keyof typeof IconMap })}
                 <div className="grid gap-1">
@@ -247,8 +300,30 @@ export default function AppPage() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem>View Project</DropdownMenuItem>
-                    <DropdownMenuItem>View Settings</DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        if (!app.versions || app.versions.length === 0) {
+                          toast({
+                            title: "404",
+                            variant: "destructive",
+                            description: "app version not found",
+                          });
+                          return;
+                        }
+                        let url = `/cluster/app/detail`;
+                        if (repositorieid) {
+                          url += `?repositorieid=${repositorieid}&appname=${app.name}&appversionnumber=${app.versions[0].version}`;
+                        } else {
+                          url += `?appid=${app.id}&versionid=${app.versions[0].id}`;
+                        }
+                        router.push(url);
+                      }}
+                    >
+                      View App
+                    </DropdownMenuItem>
+                    <DropdownMenuItem disabled={app.app_type_id === "-2"}>
+                      Delete
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </CardHeader>

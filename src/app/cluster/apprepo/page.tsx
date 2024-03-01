@@ -37,12 +37,24 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Cluster } from "@/types/types";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogClose,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Repositorie } from "@/types/types";
+import { AppstoreService } from "@/services/app/v1alpha1/app";
 import { useToast } from "@/components/ui/use-toast";
 import { useRouter } from "next/navigation";
-import { ClusterServices } from "@/services/cluster/v1alpha1/cluster";
 
-export default function ClusterListPage() {
+export default function AppRepoPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -52,64 +64,167 @@ export default function ClusterListPage() {
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
-
-  const [data, setData] = React.useState<Cluster[]>([]);
-
-  const refreshClusterList = React.useCallback(() => {
-    ClusterServices.getList().then((data) => {
+  const [data, setData] = React.useState<Repositorie[]>([]);
+  const refreshRepoList = React.useCallback(() => {
+    AppstoreService.appRepoList().then((data) => {
       if (data instanceof Error) {
         toast({
-          title: "Get cluster items fail",
+          title: "app repositorie items fail",
           variant: "destructive",
           description: data.message,
         });
         return;
       }
-      setData(data.clusters as Cluster[]);
+      setData(data.items as Repositorie[]);
     });
   }, [toast]);
 
-  const deleteCluster = (clusterID: string) => {
-    ClusterServices.deleteCluster(clusterID).then((res) => {
-      if (res instanceof Error) {
-        toast({
-          title: "Delete cluster fail",
-          variant: "destructive",
-          description: res.message,
-        });
-        return;
-      }
-      toast({
-        title: "Delete cluster success",
-        description: "Cluster has been deleted",
-      });
-      refreshClusterList();
-    });
-  };
-
-  const uninstallCluster = (clusterID: string) => {
-    ClusterServices.uninstallCluster(clusterID).then((res) => {
-      if (res instanceof Error) {
-        toast({
-          title: "Uninstall cluster fail",
-          variant: "destructive",
-          description: res.message,
-        });
-        return;
-      }
-      toast({
-        title: "Uninstall cluster success",
-        description: "Cluster has been uninstalled",
-      });
-      refreshClusterList();
-    });
-  };
-
   React.useEffect(() => {
-    refreshClusterList();
-  }, [refreshClusterList]);
+    refreshRepoList();
+  }, [refreshRepoList]);
 
-  const columns: ColumnDef<Cluster>[] = [
+  const [AddEditRepositorieOpen, setAddEditRepositorieOpen] =
+    React.useState(false);
+  const [editRepositorie, setEditRepositorie] =
+    React.useState<Repositorie | null>(null);
+
+  function AddEditRepositorie() {
+    const { toast } = useToast();
+    const saveRepositorie = () => {
+      if (editRepositorie?.id === "") {
+        editRepositorie.id = "0";
+      }
+      toast({
+        title: "app repositorie",
+        description: "saving...",
+      });
+      AppstoreService.saveAppRepo(editRepositorie).then((data) => {
+        if (data instanceof Error) {
+          toast({
+            title: "app repositorie saveing fail",
+            variant: "destructive",
+            description: data.message,
+          });
+          return;
+        }
+        refreshRepoList();
+        let descriptionMsg = "add success";
+        if (Number(editRepositorie?.id) > 0) {
+          descriptionMsg = "edit success";
+        }
+        toast({
+          title: "app repositorie",
+          description: descriptionMsg,
+        });
+      });
+    };
+
+    return (
+      <Dialog
+        open={AddEditRepositorieOpen}
+        onOpenChange={setAddEditRepositorieOpen}
+      >
+        <DialogTrigger asChild>
+          <Button variant="outline" onClick={() => setEditRepositorie(null)}>
+            Add New
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>repositorie</DialogTitle>
+            <DialogDescription>
+              Make changes to repositorie here. Click save when you are done.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="name" className="text-right">
+                Name
+              </Label>
+              <Input
+                id="name"
+                value={editRepositorie?.name}
+                onChange={(e) => {
+                  setEditRepositorie((prevRepositorie) => ({
+                    ...prevRepositorie,
+                    name: e.target.value,
+                    id: prevRepositorie?.id || "",
+                    url: prevRepositorie?.url || "",
+                    description: prevRepositorie?.description || "",
+                  }));
+                }}
+                placeholder="Bitnami"
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="url" className="text-right">
+                URL
+              </Label>
+              <Input
+                id="url"
+                placeholder="https://charts.bitnami.com/bitnami"
+                className="col-span-3"
+                value={editRepositorie?.url}
+                onChange={(e) => {
+                  setEditRepositorie((prevRepositorie) => ({
+                    ...prevRepositorie,
+                    url: e.target.value,
+                    id: prevRepositorie?.id || "",
+                    name: prevRepositorie?.name || "",
+                    description: prevRepositorie?.description || "",
+                  }));
+                }}
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="description" className="text-right">
+                Description
+              </Label>
+              <Textarea
+                className="col-span-3"
+                id="description"
+                placeholder="Type your message here."
+                value={editRepositorie?.description}
+                onChange={(e) => {
+                  setEditRepositorie((prevRepositorie) => ({
+                    ...prevRepositorie,
+                    description: e.target.value,
+                    id: prevRepositorie?.id || "",
+                    name: prevRepositorie?.name || "",
+                    url: prevRepositorie?.url || "",
+                  }));
+                }}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button type="button" variant="outline" onClick={saveRepositorie}>
+                Save
+              </Button>
+            </DialogClose>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  const appRepoDelete = (id: string) => {
+    AppstoreService.appRepoDelete(id).then((data) => {
+      if (data instanceof Error) {
+        toast({
+          title: "app repositorie delete fail",
+          variant: "destructive",
+          description: data.message,
+        });
+        return;
+      }
+      refreshRepoList();
+    });
+  };
+
+  const columns: ColumnDef<Repositorie>[] = [
     {
       id: "select",
       header: ({ table }) => (
@@ -167,28 +282,30 @@ export default function ClusterListPage() {
       ),
     },
     {
-      accessorKey: "server_version",
-      header: "Server Version",
-      cell: ({ row }) => <div>{row.getValue("server_version")}</div>,
+      accessorKey: "url",
+      header: "URL",
+      cell: ({ row }) => <div>{row.getValue("url")}</div>,
     },
     {
-      accessorKey: "api_server_address",
-      header: "Api Server Address",
-      cell: ({ row }) => <div>{row.getValue("api_server_address")}</div>,
-    },
-    {
-      accessorKey: "state",
-      header: "State",
-      cell: ({ row }) => (
-        <div className="capitalize">{row.getValue("state")}</div>
-      ),
+      accessorKey: "description",
+      header: () => <div>Description</div>,
+      cell: ({ row }) => {
+        const description = row.getValue("description");
+        const truncatedDescription =
+          typeof description === "string" && description.length > 60
+            ? description.substring(0, 60) + "..."
+            : description;
+        return (
+          <div className="font-medium">{truncatedDescription as string}</div>
+        );
+      },
     },
     {
       id: "actions",
       enableHiding: false,
       header: "Actions",
       cell: ({ row }) => {
-        const cluster = row.original;
+        const repositorie = row.original;
 
         return (
           <DropdownMenu>
@@ -201,35 +318,33 @@ export default function ClusterListPage() {
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
               <DropdownMenuItem
-                onClick={() =>
-                  navigator.clipboard.writeText(String(cluster.id))
-                }
+                onClick={() => navigator.clipboard.writeText(repositorie.id)}
               >
-                Copy cluster ID
+                Copy repositorie ID
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                onClick={() => router.push(`/project?clusterid=${cluster.id}`)}
-              >
-                View Projects
-              </DropdownMenuItem>
-              <DropdownMenuItem
                 onClick={() =>
-                  router.push(`/cluster/list/detail?clusterid=${cluster.id}`)
+                  router.push("/cluster/app?repositorieid=" + repositorie.id)
                 }
               >
-                View Detail
+                View Apps
               </DropdownMenuItem>
               <DropdownMenuItem
-                disabled={cluster.state !== "running"}
-                onClick={() => uninstallCluster(cluster?.id)}
+                onClick={() => {
+                  setAddEditRepositorieOpen(true);
+                  setEditRepositorie((prevRepositorie) => ({
+                    ...prevRepositorie,
+                    name: repositorie.name,
+                    id: repositorie.id,
+                    url: repositorie.url,
+                    description: repositorie.description,
+                  }));
+                }}
               >
-                UnDeploy
+                Edit
               </DropdownMenuItem>
-              <DropdownMenuItem
-                disabled={cluster.state === "running"}
-                onClick={() => deleteCluster(cluster?.id)}
-              >
+              <DropdownMenuItem onClick={() => appRepoDelete(repositorie.id)}>
                 Delete
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -262,7 +377,7 @@ export default function ClusterListPage() {
     <div className="w-full">
       <div className="flex items-center py-4">
         <Input
-          placeholder="Filter clusters..."
+          placeholder="Filter repositories..."
           value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
           onChange={(event) =>
             table.getColumn("name")?.setFilterValue(event.target.value)
@@ -295,14 +410,7 @@ export default function ClusterListPage() {
               })}
           </DropdownMenuContent>
         </DropdownMenu>
-        <Button
-          variant="outline"
-          onClick={() => {
-            router.push("/cluster/list/new");
-          }}
-        >
-          Add New
-        </Button>
+        {AddEditRepositorie()}
       </div>
       <div className="rounded-md border">
         <Table>

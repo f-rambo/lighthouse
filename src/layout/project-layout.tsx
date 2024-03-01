@@ -5,6 +5,8 @@ import Link from "next/link";
 import HeaderComponent from "./header";
 import { ShoppingCartIcon, PackageIcon } from "@/components/icon";
 import { HomeIcon, BackpackIcon, TableIcon } from "@radix-ui/react-icons";
+import { useSearchParams, useRouter } from "next/navigation";
+import { useToast } from "@/components/ui/use-toast";
 
 let menu = [
   {
@@ -34,6 +36,19 @@ const Layout = ({ children }: ChildContainerProps) => {
   useEffect(() => {
     setActivePath(window.location.pathname);
   }, []);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const { toast } = useToast();
+  const clusterid = searchParams.get("clusterid");
+  if (!clusterid || (clusterid as string) == "") {
+    toast({
+      title: "project page fail",
+      variant: "destructive",
+      description: "clusterid is required",
+    });
+    router.push("/cluster/list");
+    return;
+  }
   return (
     <React.Fragment>
       <div className="grid min-h-screen w-full overflow-hidden lg:grid-cols-[280px_1fr]">
@@ -42,7 +57,7 @@ const Layout = ({ children }: ChildContainerProps) => {
             <div className="flex h-[60px] items-center px-6">
               <Link className="flex items-center gap-2 font-semibold" href="/">
                 <BackpackIcon className="h-6 w-6" />
-                <span className="">Acme Inc</span>
+                <span className="">Ocean</span>
               </Link>
             </div>
             <div className="flex-1">
@@ -55,7 +70,7 @@ const Layout = ({ children }: ChildContainerProps) => {
 
                   return (
                     <Link
-                      href={item.path}
+                      href={item.path + `?clusterid=${clusterid}`}
                       key={index}
                       className={className}
                       onClick={() => setActivePath(item.path)}

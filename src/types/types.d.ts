@@ -85,3 +85,50 @@ type Dependency = {
       importValues: string[];
       alias: string;
 }
+
+type Repositorie = {
+      id: string;
+      name: string;
+      url: string;
+      description: string;
+}
+
+type Cluster = {
+      id: string;
+      name: string;
+      server_version: string;
+      api_server_address: string;
+      config: string;
+      addons: string;
+      state: string;
+      nodes: Node[];
+      logs: string;
+};
+
+type Node = {
+      id: string;
+      name: string;
+      labels: string;
+      annotations: string;
+      os_image: string;
+      kernel: string;
+      container: string;
+      kubelet: string;
+      kube_proxy: string;
+      internal_ip: string;
+      external_ip: string;
+      user: string;
+      password: string;
+      sudo_password: string;
+      role: string;
+      state: string;
+      cluster_id: number;
+};
+
+type Project = {
+      id: string;
+      name: string;
+      description: string;
+      cluster_id: string;
+      namespace: string;
+};
