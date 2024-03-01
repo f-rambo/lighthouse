@@ -131,4 +131,18 @@ type Project = {
       description: string;
       cluster_id: string;
       namespace: string;
+      state: string;
+      business_types: BusinessType[];
+      business_technology: string;
+};
+
+type BusinessType = {
+      id: string;
+      name: string;
+      technology_types: TechnologyType[];
+};
+
+type TechnologyType = {
+      id: string;
+      name: string;
 };

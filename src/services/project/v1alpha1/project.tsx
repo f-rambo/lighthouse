@@ -52,4 +52,15 @@ export const ProjectServices = {
     });
     return handlerResponse(res);
   },
+  async getProjectMockData() {
+    const token = Cookies.get(tokenKey);
+    const res = await fetch(`${projectApi}/mock`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return handlerResponse(res);
+  },
 };

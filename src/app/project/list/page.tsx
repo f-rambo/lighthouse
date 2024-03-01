@@ -18,7 +18,6 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -49,11 +48,19 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Project } from "@/types/types";
+import { Project, TechnologyType, BusinessType } from "@/types/types";
 import { ProjectServices } from "@/services/project/v1alpha1/project";
 import { useToast } from "@/components/ui/use-toast";
 import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function AppRepoPage() {
   const router = useRouter();
@@ -68,6 +75,49 @@ export default function AppRepoPage() {
   const searchParams = useSearchParams();
   const clusterid = searchParams.get("clusterid");
   const [data, setData] = React.useState<Project[]>([]);
+  const [projectMockData, setProjectMockData] = React.useState<Project | null>(
+    null
+  );
+  const [technologyTypes, setTechnologyTypes] = React.useState<
+    TechnologyType[]
+  >([]);
+  const [selectedTechnologyTypeid, setSelectedTechnologyTypeid] =
+    React.useState<string>("");
+  const [selectedBusinessTypeid, setSelectedBusinessTypeid] =
+    React.useState<string>("");
+
+  const onBusinessTypeChange = (selectedBusinessTypeid: string) => {
+    if (selectedBusinessTypeid === "") {
+      return;
+    }
+    setSelectedBusinessTypeid(selectedBusinessTypeid);
+    const technologyTypeItems = projectMockData?.business_types.find(
+      (v) => v.id === selectedBusinessTypeid
+    )?.technology_types;
+    if (technologyTypeItems === undefined) {
+      return;
+    }
+    console.log(technologyTypeItems);
+    setTechnologyTypes(technologyTypeItems);
+  };
+
+  const getProjectMockData = React.useCallback(() => {
+    if (projectMockData !== null) {
+      return;
+    }
+    ProjectServices.getProjectMockData().then((data) => {
+      if (data instanceof Error) {
+        toast({
+          title: "project items fail",
+          variant: "destructive",
+          description: data.message,
+        });
+        return;
+      }
+      setProjectMockData(data as Project);
+    });
+  }, [toast, projectMockData]);
+
   const refreshProjectList = React.useCallback(() => {
     ProjectServices.getList(clusterid as string).then((data) => {
       if (data instanceof Error) {
@@ -84,17 +134,40 @@ export default function AppRepoPage() {
 
   React.useEffect(() => {
     refreshProjectList();
-  }, [refreshProjectList]);
+    getProjectMockData();
+  }, [refreshProjectList, getProjectMockData]);
 
   const [AddEditProjectOpen, setAddEditProjectOpen] = React.useState(false);
-  const [editProject, setEditProject] = React.useState<Project | null>(null);
+  const [projectName, setProjectName] = React.useState("");
+  const [projectNamespace, setProjectNamespace] = React.useState("");
+  const [projectDescription, setProjectDescription] = React.useState("");
+  const [projectid, setProjectid] = React.useState("");
 
   function AddEditProject() {
     const saveProject = () => {
-      if (editProject?.id === "") {
-        editProject.id = "0";
+      const technologyTypeData = technologyTypes?.find(
+        (v) => v.id === selectedTechnologyTypeid
+      );
+      const businessTypeData = projectMockData?.business_types.find(
+        (v) => v.id === selectedBusinessTypeid
+      );
+      const projectData: Project = {
+        id: projectid,
+        name: projectName,
+        namespace: projectNamespace,
+        description: projectDescription,
+        state: "",
+        cluster_id: clusterid as string,
+        business_types: [businessTypeData as BusinessType],
+        business_technology: "",
+      };
+      if (projectData.id === "") {
+        projectData.id = "0";
       }
-      ProjectServices.save(editProject).then((data) => {
+      projectData.business_types[0].technology_types = [
+        technologyTypeData as TechnologyType,
+      ];
+      ProjectServices.save(projectData).then((data) => {
         if (data instanceof Error) {
           toast({
             title: "project saveing fail",
@@ -105,7 +178,7 @@ export default function AppRepoPage() {
         }
         refreshProjectList();
         let descriptionMsg = "add success";
-        if (Number(editProject?.id) > 0) {
+        if (Number(projectData?.id) > 0) {
           descriptionMsg = "edit success";
         }
         toast({
@@ -118,11 +191,9 @@ export default function AppRepoPage() {
     return (
       <Dialog open={AddEditProjectOpen} onOpenChange={setAddEditProjectOpen}>
         <DialogTrigger asChild>
-          <Button variant="outline" onClick={() => setEditProject(null)}>
-            Add New
-          </Button>
+          <Button variant="outline">Add New</Button>
         </DialogTrigger>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle>project</DialogTitle>
             <DialogDescription>
@@ -136,18 +207,11 @@ export default function AppRepoPage() {
               </Label>
               <Input
                 id="name"
-                value={editProject?.name}
+                value={projectName}
                 onChange={(e) => {
-                  setEditProject((prevRepositorie) => ({
-                    ...prevRepositorie,
-                    name: e.target.value,
-                    id: prevRepositorie?.id || "",
-                    namespace: prevRepositorie?.namespace || "",
-                    description: prevRepositorie?.description || "",
-                    cluster_id: clusterid || "",
-                  }));
+                  setProjectName(e.target.value);
                 }}
-                placeholder="Project name"
+                placeholder={projectMockData?.name}
                 className="col-span-3"
               />
             </div>
@@ -157,20 +221,49 @@ export default function AppRepoPage() {
               </Label>
               <Input
                 id="url"
-                placeholder="kubernete namespace"
+                placeholder={projectMockData?.namespace}
                 className="col-span-3"
-                value={editProject?.namespace}
+                value={projectNamespace}
                 onChange={(e) => {
-                  setEditProject((prevRepositorie) => ({
-                    ...prevRepositorie,
-                    namespace: e.target.value,
-                    id: prevRepositorie?.id || "",
-                    name: prevRepositorie?.name || "",
-                    description: prevRepositorie?.description || "",
-                    cluster_id: clusterid || "",
-                  }));
+                  setProjectNamespace(e.target.value);
                 }}
               />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right">BusinessTypes</Label>
+              <Select required onValueChange={(v) => onBusinessTypeChange(v)}>
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Select a business type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {projectMockData?.business_types.map((businessType) => (
+                    <SelectItem key={businessType.id} value={businessType.id}>
+                      {businessType.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right">TechnologyTypes</Label>
+              <Select
+                required
+                onValueChange={(v) => setSelectedTechnologyTypeid(v)}
+              >
+                <SelectTrigger className="col-span-3">
+                  <SelectValue placeholder="Select a technology type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {technologyTypes?.map((technologyType) => (
+                    <SelectItem
+                      key={technologyType.id}
+                      value={technologyType.id}
+                    >
+                      {technologyType.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="description" className="text-right">
@@ -180,16 +273,9 @@ export default function AppRepoPage() {
                 className="col-span-3"
                 id="description"
                 placeholder="Type your message here."
-                value={editProject?.description}
+                value={projectDescription}
                 onChange={(e) => {
-                  setEditProject((prevRepositorie) => ({
-                    ...prevRepositorie,
-                    description: e.target.value,
-                    id: prevRepositorie?.id || "",
-                    name: prevRepositorie?.name || "",
-                    namespace: prevRepositorie?.namespace || "",
-                    cluster_id: clusterid || "",
-                  }));
+                  setProjectDescription(e.target.value);
                 }}
               />
             </div>
@@ -300,6 +386,18 @@ export default function AppRepoPage() {
       cell: ({ row }) => <div>{row.getValue("namespace")}</div>,
     },
     {
+      accessorKey: "business_technology",
+      header: "Business Type/Technology Type",
+      cell: ({ row }) => <div>{row.getValue("business_technology")}</div>,
+    },
+    {
+      accessorKey: "state",
+      header: "State",
+      cell: ({ row }) => (
+        <div className="capitalize">{row.getValue("state")}</div>
+      ),
+    },
+    {
       accessorKey: "description",
       header: () => <div>Description</div>,
       cell: ({ row }) => {
@@ -360,23 +458,34 @@ export default function AppRepoPage() {
               >
                 View Apps
               </DropdownMenuItem>
+              <DropdownMenuItem
+                disabled={project.state === "running"}
+                onClick={() => console.log("启动项目，开始安装项目组件")}
+              >
+                Enable
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                disabled={project.state !== "running"}
+                onClick={() => console.log("停止项目，停止项目组件")}
+              >
+                UnEnable
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={() => {
                   setAddEditProjectOpen(true);
-                  setEditProject((prevRepositorie) => ({
-                    ...prevRepositorie,
-                    name: project.name,
-                    id: project.id,
-                    namespace: project.namespace,
-                    description: project.description,
-                    cluster_id: clusterid as string,
-                  }));
+                  setProjectid(project.id);
+                  setProjectName(project.name);
+                  setProjectNamespace(project.namespace);
+                  setProjectDescription(project.description);
                 }}
               >
                 Edit
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => projectDelete(project.id)}>
+              <DropdownMenuItem
+                disabled={project.state === "running"}
+                onClick={() => projectDelete(project.id)}
+              >
                 Delete
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -409,7 +518,7 @@ export default function AppRepoPage() {
     <div className="w-full">
       <div className="flex items-center py-4">
         <Input
-          placeholder="Filter repositories..."
+          placeholder="Filter projects..."
           value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
           onChange={(event) =>
             table.getColumn("name")?.setFilterValue(event.target.value)

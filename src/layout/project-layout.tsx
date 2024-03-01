@@ -40,6 +40,7 @@ const Layout = ({ children }: ChildContainerProps) => {
   const router = useRouter();
   const { toast } = useToast();
   const clusterid = searchParams.get("clusterid");
+  const projectid = searchParams.get("projectid");
   if (!clusterid || (clusterid as string) == "") {
     toast({
       title: "project page fail",
@@ -48,6 +49,10 @@ const Layout = ({ children }: ChildContainerProps) => {
     });
     router.push("/cluster/list");
     return;
+  }
+  let urlParam = `?clusterid=${clusterid}`;
+  if (projectid) {
+    urlParam += `&projectid=${projectid}`;
   }
   return (
     <React.Fragment>
@@ -70,7 +75,7 @@ const Layout = ({ children }: ChildContainerProps) => {
 
                   return (
                     <Link
-                      href={item.path + `?clusterid=${clusterid}`}
+                      href={item.path + urlParam}
                       key={index}
                       className={className}
                       onClick={() => setActivePath(item.path)}
