@@ -126,4 +126,16 @@ export const ClusterServices = {
     );
     return handlerResponse(res);
   },
+  async checkClusterConfig(clusterID: string) {
+    const token = Cookies.get(tokenKey);
+    const res = await fetch(`${clusterApi}/check`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ id: clusterID }),
+    });
+    return handlerResponse(res);
+  },
 };

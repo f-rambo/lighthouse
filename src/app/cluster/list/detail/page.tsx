@@ -34,6 +34,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { ActivityLogIcon } from "@radix-ui/react-icons";
 import {
   Table,
   TableBody,
@@ -55,7 +56,6 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import YamlEditor from "@focus-reactive/react-yaml";
-import { Code } from "@nextui-org/react";
 
 export default function DetailsPage() {
   const { toast } = useToast();
@@ -206,6 +206,44 @@ export default function DetailsPage() {
       toast({
         title: "Success",
         description: "Node added successfully",
+        duration: 5000,
+      });
+    });
+  };
+
+  const deploy = () => {
+    ClusterServices.setUpCluster(cluster?.id as string).then((res) => {
+      if (res instanceof Error) {
+        toast({
+          title: "Error",
+          description: "Error while setting up cluster",
+          duration: 5000,
+          variant: "destructive",
+        });
+        return;
+      }
+      toast({
+        title: "Deploying cluster...",
+        description: "Wait for the cluster to be deployed",
+        duration: 5000,
+      });
+    });
+  };
+
+  const unDeploy = () => {
+    ClusterServices.uninstallCluster(cluster?.id as string).then((res) => {
+      if (res instanceof Error) {
+        toast({
+          title: "Error",
+          description: "Error while undeploying cluster",
+          duration: 5000,
+          variant: "destructive",
+        });
+        return;
+      }
+      toast({
+        title: "Undeploying cluster...",
+        description: "Wait for the cluster to be undeployed",
         duration: 5000,
       });
     });
@@ -545,6 +583,35 @@ export default function DetailsPage() {
           </div>
           <div className="space-y-4">
             <div className="bg-gray-100 p-4 rounded">
+              <h3 className="text-lg font-semibold">Actions</h3>
+              <div className="flex items-center mt-2">
+                <ActivityLogIcon className="h-6 w-6 mr-3" />
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button className="w-full" variant="outline">
+                      Menu
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-full">
+                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      disabled={cluster?.state === "running"}
+                      onClick={deploy}
+                    >
+                      Reinstall
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      disabled={cluster?.state !== "running"}
+                      onClick={unDeploy}
+                    >
+                      Uninstall
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </div>
+            <div className="bg-gray-100 p-4 rounded">
               <h3 className="text-lg font-semibold">Cluster information</h3>
               <div className="flex items-center mt-4">
                 <ScrollArea className="w-full rounded-md border">
@@ -575,9 +642,7 @@ export default function DetailsPage() {
             <div className="bg-gray-100 p-4 rounded">
               <h3 className="text-lg font-semibold">Logs</h3>
               <div id="log" className="overflow-y-auto h-96 text-gray-600">
-                <pre>
-                  <Code size="sm">{logs}</Code>
-                </pre>
+                <pre>{logs}</pre>
               </div>
             </div>
           </div>

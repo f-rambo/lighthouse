@@ -228,6 +228,14 @@ export default function ClusterListPage() {
               </DropdownMenuItem>
               <DropdownMenuItem
                 disabled={cluster.state === "running"}
+                onClick={() => {
+                  router.push(`/cluster/list/new?clusterid=${cluster.id}`);
+                }}
+              >
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                disabled={cluster.state === "running"}
                 onClick={() => deleteCluster(cluster?.id)}
               >
                 Delete

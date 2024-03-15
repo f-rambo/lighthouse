@@ -100,6 +100,7 @@ type Cluster = {
       api_server_address: string;
       config: string;
       addons: string;
+      addons_config: string;
       state: string;
       nodes: Node[];
       logs: string;
