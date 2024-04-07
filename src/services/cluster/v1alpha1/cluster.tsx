@@ -18,6 +18,17 @@ export const ClusterServices = {
     });
     return handlerResponse(res);
   },
+  async GetCurrentCluster() {
+    const token = Cookies.get(tokenKey);
+    const res = await fetch(`${clusterApi}/current`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return handlerResponse(res);
+  },
   async getDetail(id: string) {
     const token = Cookies.get(tokenKey);
     const res = await fetch(`${clusterApi}?id=${id}`, {

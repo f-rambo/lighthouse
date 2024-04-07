@@ -1,5 +1,6 @@
 import Cookies from "js-cookie";
 import { handlerResponse, jsonToQueryString } from "../../common";
+import { json } from "stream/consumers";
 
 const projectApi = `${process.env.NEXT_PUBLIC_API ?? ""}${
   process.env.NEXT_PUBLIC_API_VERSION ?? ""
@@ -60,6 +61,30 @@ export const ProjectServices = {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
+    });
+    return handlerResponse(res);
+  },
+  async enable(id: string) {
+    const token = Cookies.get(tokenKey);
+    const res = await fetch(`${projectApi}/enable`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ id: id }),
+    });
+    return handlerResponse(res);
+  },
+  async disable(id: string) {
+    const token = Cookies.get(tokenKey);
+    const res = await fetch(`${projectApi}/disable`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ id: id }),
     });
     return handlerResponse(res);
   },

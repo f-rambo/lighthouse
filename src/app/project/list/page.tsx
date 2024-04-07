@@ -48,19 +48,21 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Project, TechnologyType, BusinessType } from "@/types/types";
+import { Project, Technology, Business } from "@/types/types";
 import { ProjectServices } from "@/services/project/v1alpha1/project";
 import { useToast } from "@/components/ui/use-toast";
 import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+
+interface BusinessCheckedStates {
+  [key: string]: boolean;
+}
 
 export default function AppRepoPage() {
   const router = useRouter();
@@ -75,31 +77,23 @@ export default function AppRepoPage() {
   const searchParams = useSearchParams();
   const clusterid = searchParams.get("clusterid");
   const [data, setData] = React.useState<Project[]>([]);
+  const [AddEditProjectOpen, setAddEditProjectOpen] = React.useState(false);
+  const [projectName, setProjectName] = React.useState("");
+  const [projectDescription, setProjectDescription] = React.useState("");
+  const [projectid, setProjectid] = React.useState("");
   const [projectMockData, setProjectMockData] = React.useState<Project | null>(
     null
   );
-  const [technologyTypes, setTechnologyTypes] = React.useState<
-    TechnologyType[]
-  >([]);
-  const [selectedTechnologyTypeid, setSelectedTechnologyTypeid] =
+  const [business, setBusiness] = React.useState<Business[]>([]);
+  const [technologys, setTechnologys] = React.useState<Technology[]>([]);
+  const [businessCheckedStates, setBusinessCheckedStates] =
+    React.useState<BusinessCheckedStates>({});
+  const [technologyCheckedStates, setTechnologyCheckedStates] =
+    React.useState<BusinessCheckedStates>({});
+  const [businessCheckeName, setBusinessCheckeName] =
     React.useState<string>("");
-  const [selectedBusinessTypeid, setSelectedBusinessTypeid] =
+  const [technologyCheckeName, setTechnologyCheckeName] =
     React.useState<string>("");
-
-  const onBusinessTypeChange = (selectedBusinessTypeid: string) => {
-    if (selectedBusinessTypeid === "") {
-      return;
-    }
-    setSelectedBusinessTypeid(selectedBusinessTypeid);
-    const technologyTypeItems = projectMockData?.business_types.find(
-      (v) => v.id === selectedBusinessTypeid
-    )?.technology_types;
-    if (technologyTypeItems === undefined) {
-      return;
-    }
-    console.log(technologyTypeItems);
-    setTechnologyTypes(technologyTypeItems);
-  };
 
   const getProjectMockData = React.useCallback(() => {
     if (projectMockData !== null) {
@@ -114,7 +108,9 @@ export default function AppRepoPage() {
         });
         return;
       }
-      setProjectMockData(data as Project);
+      const porject = data as Project;
+      setProjectMockData(porject);
+      setBusiness(porject.business);
     });
   }, [toast, projectMockData]);
 
@@ -137,63 +133,253 @@ export default function AppRepoPage() {
     getProjectMockData();
   }, [refreshProjectList, getProjectMockData]);
 
-  const [AddEditProjectOpen, setAddEditProjectOpen] = React.useState(false);
-  const [projectName, setProjectName] = React.useState("");
-  const [projectNamespace, setProjectNamespace] = React.useState("");
-  const [projectDescription, setProjectDescription] = React.useState("");
-  const [projectid, setProjectid] = React.useState("");
-
-  function AddEditProject() {
-    const saveProject = () => {
-      const technologyTypeData = technologyTypes?.find(
-        (v) => v.id === selectedTechnologyTypeid
-      );
-      const businessTypeData = projectMockData?.business_types.find(
-        (v) => v.id === selectedBusinessTypeid
-      );
-      const projectData: Project = {
-        id: projectid,
-        name: projectName,
-        namespace: projectNamespace,
-        description: projectDescription,
-        state: "",
-        cluster_id: clusterid as string,
-        business_types: [businessTypeData as BusinessType],
-        business_technology: "",
-      };
-      if (projectData.id === "") {
-        projectData.id = "0";
+  const handlerTechnologyTypeChange = (id: string) => {
+    const newTechnologyCheckedStates = { ...technologyCheckedStates };
+    newTechnologyCheckedStates[id] = !newTechnologyCheckedStates[id];
+    setTechnologyCheckedStates(newTechnologyCheckedStates);
+    let technologyNames: string[] = [];
+    technologys.forEach((technologyType) => {
+      if (newTechnologyCheckedStates[technologyType.name] === true) {
+        technologyNames.push(technologyType.name);
       }
-      projectData.business_types[0].technology_types = [
-        technologyTypeData as TechnologyType,
-      ];
-      ProjectServices.save(projectData).then((data) => {
-        if (data instanceof Error) {
-          toast({
-            title: "project saveing fail",
-            variant: "destructive",
-            description: data.message,
-          });
-          return;
-        }
-        refreshProjectList();
-        let descriptionMsg = "add success";
-        if (Number(projectData?.id) > 0) {
-          descriptionMsg = "edit success";
-        }
-        toast({
-          title: "project",
-          description: descriptionMsg,
-        });
-      });
-    };
+    });
+    let newTechnologyCheckeName = technologyNames.join(", ");
+    if (newTechnologyCheckeName.length > 30) {
+      newTechnologyCheckeName = `${newTechnologyCheckeName.slice(0, 30)}...`;
+    }
+    setTechnologyCheckeName(newTechnologyCheckeName);
+  };
 
+  const projectEditHandlerTechnologyTypeAndBusinessTypeChange = (
+    business: Business[]
+  ) => {
+    const allBusiness = projectMockData?.business;
+    if (!allBusiness) {
+      return;
+    }
+    let newBusinessCheckedStates: { [key: string]: boolean } = {};
+    let newTechnologyCheckedStates: { [key: string]: boolean } = {};
+    let newTechnologyTypes: Technology[] = [];
+    let businessNames: string[] = [];
+    business?.forEach((businessType) => {
+      newBusinessCheckedStates[businessType.name] = true;
+      businessNames.push(businessType.name);
+      newTechnologyTypes = [...newTechnologyTypes, ...businessType.technologys];
+    });
+
+    allBusiness?.forEach((businessType) => {
+      if (!newBusinessCheckedStates[businessType.name]) {
+        newBusinessCheckedStates[businessType.name] = false;
+      }
+    });
+
+    setBusinessCheckedStates(newBusinessCheckedStates);
+    setTechnologys(
+      allBusiness.reduce((acc: Technology[], businessType) => {
+        if (newBusinessCheckedStates[businessType.name]) {
+          acc.push(...businessType.technologys);
+        }
+        return acc;
+      }, [])
+    );
+
+    let newBusinessCheckeName = businessNames.join(", ");
+    if (newBusinessCheckeName.length > 30) {
+      newBusinessCheckeName = `${newBusinessCheckeName.slice(0, 30)}...`;
+    }
+    setBusinessCheckeName(newBusinessCheckeName);
+
+    let newTechnologyCheckeNameArr: string[] = [];
+    newTechnologyTypes.forEach((technologyType) => {
+      newTechnologyCheckedStates[technologyType.name] = true;
+      newTechnologyCheckeNameArr.push(technologyType.name);
+    });
+    let newTechnologyCheckeName = newTechnologyCheckeNameArr.join(", ");
+    if (newTechnologyCheckeName.length > 30) {
+      newTechnologyCheckeName = `${newTechnologyCheckeName.slice(0, 30)}...`;
+    }
+    setTechnologyCheckedStates(newTechnologyCheckedStates);
+    setTechnologyCheckeName(newTechnologyCheckeName);
+  };
+
+  const technologyType = () => {
+    return (
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button variant="outline" className="col-span-3">
+            {!technologyCheckeName
+              ? "Select Technology Type"
+              : technologyCheckeName}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-80">
+          <div className="grid gap-4 overflow-y-auto overflow-auto">
+            <div className="space-y-2">
+              <h4 className="font-medium leading-none">Technology Type</h4>
+              <p className="text-sm text-muted-foreground">
+                Select the technology type for this project.
+              </p>
+            </div>
+            <div className="grid gap-2">
+              {technologys?.map((technologyType) => (
+                <div
+                  id={technologyType.name}
+                  key={technologyType.name}
+                  className="flex items-center gap-2"
+                >
+                  <Checkbox
+                    checked={
+                      technologyCheckedStates[technologyType.name] || false
+                    }
+                    onClick={() =>
+                      handlerTechnologyTypeChange(technologyType.name)
+                    }
+                    key={technologyType.name}
+                    value={technologyType.name}
+                  />
+                  <Label className="text-sm font-normal" htmlFor="all">
+                    {technologyType.name}
+                  </Label>
+                </div>
+              ))}
+            </div>
+          </div>
+        </PopoverContent>
+      </Popover>
+    );
+  };
+
+  const handlerBusinessTypeChange = (id: string) => {
+    const newBusinessCheckedStates = { ...businessCheckedStates };
+    newBusinessCheckedStates[id] = !newBusinessCheckedStates[id];
+    setBusinessCheckedStates(newBusinessCheckedStates);
+    let newTechnologyTypes: Technology[] = [];
+    let businessNames: string[] = [];
+    projectMockData?.business.forEach((business) => {
+      if (newBusinessCheckedStates[business.name] === true) {
+        businessNames.push(business.name);
+        newTechnologyTypes = [...newTechnologyTypes, ...business.technologys];
+      }
+    });
+    setTechnologys(newTechnologyTypes);
+    let newBusinessCheckeName = businessNames.join(", ");
+    if (newBusinessCheckeName.length > 30) {
+      newBusinessCheckeName = `${newBusinessCheckeName.slice(0, 30)}...`;
+    }
+    setBusinessCheckeName(newBusinessCheckeName);
+  };
+
+  const selectBusinessType = () => {
+    return (
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button variant="outline" className="col-span-3">
+            {!businessCheckeName ? "Select Business Type" : businessCheckeName}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-80">
+          <div className="grid gap-4 overflow-y-auto overflow-auto">
+            <div className="space-y-2">
+              <h4 className="font-medium leading-none">Business Type</h4>
+              <p className="text-sm text-muted-foreground">
+                Select the business type for this project.
+              </p>
+            </div>
+            <div className="grid gap-2">
+              {business?.map((business) => (
+                <div
+                  id={business.name}
+                  key={business.name}
+                  className="flex items-center gap-2"
+                >
+                  <Checkbox
+                    checked={businessCheckedStates[business.name] || false}
+                    onClick={() => handlerBusinessTypeChange(business.name)}
+                    key={business.name}
+                    value={business.name}
+                  />
+                  <Label className="text-sm font-normal" htmlFor="all">
+                    {business.name}
+                  </Label>
+                </div>
+              ))}
+            </div>
+          </div>
+        </PopoverContent>
+      </Popover>
+    );
+  };
+
+  const getBusinessTypes = () => {
+    let businessTypeArr: Business[] = [];
+    business.forEach((businessType) => {
+      if (businessCheckedStates[businessType.name] === true) {
+        let technologys: Technology[] = [];
+        businessType.technologys.forEach((technology) => {
+          if (technologyCheckedStates[technology.name] === true) {
+            technologys.push(technology);
+          }
+        });
+        businessType.technologys = technologys;
+        businessTypeArr.push(businessType);
+      }
+    });
+    return businessTypeArr;
+  };
+
+  const clearProject = () => {
+    setProjectid("");
+    setProjectName("");
+    setProjectDescription("");
+    setBusinessCheckeName("");
+    setTechnologyCheckeName("");
+    setBusinessCheckedStates({});
+    setTechnologyCheckedStates({});
+  };
+
+  const saveProject = () => {
+    const projectData: Project = {
+      id: projectid,
+      name: projectName,
+      description: projectDescription,
+      cluster_id: clusterid as string,
+      state: "",
+      business: getBusinessTypes(),
+      business_technology: "",
+    };
+    if (projectData.id === "") {
+      projectData.id = "0";
+    }
+    ProjectServices.save(projectData).then((data) => {
+      if (data instanceof Error) {
+        toast({
+          title: "project saveing fail",
+          variant: "destructive",
+          description: data.message,
+        });
+        return;
+      }
+      refreshProjectList();
+      let descriptionMsg = "add success";
+      if (Number(projectData?.id) > 0) {
+        descriptionMsg = "edit success";
+      }
+      toast({
+        title: "project",
+        description: descriptionMsg,
+      });
+    });
+  };
+
+  const addProjectComponent = () => {
     return (
       <Dialog open={AddEditProjectOpen} onOpenChange={setAddEditProjectOpen}>
         <DialogTrigger asChild>
-          <Button variant="outline">Add New</Button>
+          <Button variant="outline" onClick={() => clearProject()}>
+            Add New
+          </Button>
         </DialogTrigger>
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>project</DialogTitle>
             <DialogDescription>
@@ -209,61 +395,23 @@ export default function AppRepoPage() {
                 id="name"
                 value={projectName}
                 onChange={(e) => {
-                  setProjectName(e.target.value);
+                  const regex = /^[A-Za-z0-9-]*$/;
+                  if (regex.test(e.target.value)) {
+                    setProjectName(e.target.value);
+                  }
                 }}
+                disabled={projectid ? true : false}
                 placeholder={projectMockData?.name}
                 className="col-span-3"
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="url" className="text-right">
-                Namespace
-              </Label>
-              <Input
-                id="url"
-                placeholder={projectMockData?.namespace}
-                className="col-span-3"
-                value={projectNamespace}
-                onChange={(e) => {
-                  setProjectNamespace(e.target.value);
-                }}
-              />
+              <Label className="text-right">Business</Label>
+              {selectBusinessType()}
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-right">BusinessTypes</Label>
-              <Select required onValueChange={(v) => onBusinessTypeChange(v)}>
-                <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="Select a business type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {projectMockData?.business_types.map((businessType) => (
-                    <SelectItem key={businessType.id} value={businessType.id}>
-                      {businessType.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-right">TechnologyTypes</Label>
-              <Select
-                required
-                onValueChange={(v) => setSelectedTechnologyTypeid(v)}
-              >
-                <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="Select a technology type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {technologyTypes?.map((technologyType) => (
-                    <SelectItem
-                      key={technologyType.id}
-                      value={technologyType.id}
-                    >
-                      {technologyType.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label className="text-right">technology</Label>
+              {technologyType()}
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="description" className="text-right">
@@ -290,13 +438,41 @@ export default function AppRepoPage() {
         </DialogContent>
       </Dialog>
     );
-  }
+  };
 
   const projectDelete = (id: string) => {
     ProjectServices.delete(id).then((data) => {
       if (data instanceof Error) {
         toast({
           title: "project delete fail",
+          variant: "destructive",
+          description: data.message,
+        });
+        return;
+      }
+      refreshProjectList();
+    });
+  };
+
+  const enableProject = (id: string) => {
+    ProjectServices.enable(id).then((data) => {
+      if (data instanceof Error) {
+        toast({
+          title: "project enable fail",
+          variant: "destructive",
+          description: data.message,
+        });
+        return;
+      }
+      refreshProjectList();
+    });
+  };
+
+  const disableProject = (id: string) => {
+    ProjectServices.enable(id).then((data) => {
+      if (data instanceof Error) {
+        toast({
+          title: "project disable fail",
           variant: "destructive",
           description: data.message,
         });
@@ -381,13 +557,8 @@ export default function AppRepoPage() {
       ),
     },
     {
-      accessorKey: "namespace",
-      header: "Namespace",
-      cell: ({ row }) => <div>{row.getValue("namespace")}</div>,
-    },
-    {
       accessorKey: "business_technology",
-      header: "Business Type/Technology Type",
+      header: "Business/Technology",
       cell: ({ row }) => <div>{row.getValue("business_technology")}</div>,
     },
     {
@@ -403,8 +574,8 @@ export default function AppRepoPage() {
       cell: ({ row }) => {
         const description = row.getValue("description");
         const truncatedDescription =
-          typeof description === "string" && description.length > 60
-            ? description.substring(0, 60) + "..."
+          typeof description === "string" && description.length > 30
+            ? description.substring(0, 30) + "..."
             : description;
         return (
           <div className="font-medium">{truncatedDescription as string}</div>
@@ -460,24 +631,27 @@ export default function AppRepoPage() {
               </DropdownMenuItem>
               <DropdownMenuItem
                 disabled={project.state === "running"}
-                onClick={() => console.log("启动项目，开始安装项目组件")}
+                onClick={() => enableProject(project.id)}
               >
                 Enable
               </DropdownMenuItem>
               <DropdownMenuItem
                 disabled={project.state !== "running"}
-                onClick={() => console.log("停止项目，停止项目组件")}
+                onClick={() => disableProject(project.id)}
               >
-                UnEnable
+                Disable
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={() => {
+                  clearProject();
                   setAddEditProjectOpen(true);
                   setProjectid(project.id);
                   setProjectName(project.name);
-                  setProjectNamespace(project.namespace);
                   setProjectDescription(project.description);
+                  projectEditHandlerTechnologyTypeAndBusinessTypeChange(
+                    project.business
+                  );
                 }}
               >
                 Edit
@@ -551,7 +725,7 @@ export default function AppRepoPage() {
               })}
           </DropdownMenuContent>
         </DropdownMenu>
-        {AddEditProject()}
+        {addProjectComponent()}
       </div>
       <div className="rounded-md border">
         <Table>

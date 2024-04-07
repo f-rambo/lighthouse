@@ -104,6 +104,7 @@ type Cluster = {
       state: string;
       nodes: Node[];
       logs: string;
+      is_current_cluster: boolean;
 };
 
 type Node = {
@@ -131,19 +132,16 @@ type Project = {
       name: string;
       description: string;
       cluster_id: string;
-      namespace: string;
       state: string;
-      business_types: BusinessType[];
-      business_technology: string;
+      business: Business[];
+      business_technology: string; // ---
 };
 
-type BusinessType = {
-      id: string;
+type Business = {
       name: string;
-      technology_types: TechnologyType[];
+      technologys: Technology[];
 };
 
-type TechnologyType = {
-      id: string;
+type Technology = {
       name: string;
 };

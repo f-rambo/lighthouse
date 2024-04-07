@@ -4,6 +4,8 @@ import {
   CaretSortIcon,
   ChevronDownIcon,
   DotsHorizontalIcon,
+  CheckIcon,
+  Cross2Icon,
 } from "@radix-ui/react-icons";
 import {
   ColumnDef,
@@ -68,6 +70,34 @@ export default function ClusterListPage() {
       setData(data.clusters as Cluster[]);
     });
   }, [toast]);
+
+  const GetCurrentCluster = () => {
+    ClusterServices.GetCurrentCluster().then((res) => {
+      if (res instanceof Error) {
+        toast({
+          title: "Get current cluster fail",
+          variant: "destructive",
+          description: res.message,
+        });
+        return;
+      }
+      ClusterServices.saveCluster(res).then((res) => {
+        if (res instanceof Error) {
+          toast({
+            title: "Save current cluster fail",
+            variant: "destructive",
+            description: res.message,
+          });
+          return;
+        }
+        refreshClusterList();
+      });
+      toast({
+        title: "Get current cluster success",
+        description: "Current cluster has been fetched",
+      });
+    });
+  };
 
   const deleteCluster = (clusterID: string) => {
     ClusterServices.deleteCluster(clusterID).then((res) => {
@@ -184,6 +214,19 @@ export default function ClusterListPage() {
       ),
     },
     {
+      accessorKey: "is_current_cluster",
+      header: "Current Cluster",
+      cell: ({ row }) => (
+        <div className="capitalize">
+          {(row.getValue("is_current_cluster") as boolean) ? (
+            <CheckIcon className="ml-2  h-4 w-4" />
+          ) : (
+            <Cross2Icon className="ml-2  h-4 w-4" />
+          )}
+        </div>
+      ),
+    },
+    {
       id: "actions",
       enableHiding: false,
       header: "Actions",
@@ -221,7 +264,7 @@ export default function ClusterListPage() {
                 View Detail
               </DropdownMenuItem>
               <DropdownMenuItem
-                disabled={cluster.state !== "running"}
+                disabled={cluster.state !== "running" || cluster.config === ""}
                 onClick={() => uninstallCluster(cluster?.id)}
               >
                 UnDeploy
@@ -355,7 +398,15 @@ export default function ClusterListPage() {
                   colSpan={columns.length}
                   className="h-24 text-center"
                 >
-                  No results.
+                  <div>
+                    <Button
+                      variant="outline"
+                      onClick={() => GetCurrentCluster()}
+                    >
+                      Get cluster information
+                    </Button>
+                    <p className="mt-6">No results...</p>
+                  </div>
                 </TableCell>
               </TableRow>
             )}
