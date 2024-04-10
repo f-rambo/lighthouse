@@ -145,3 +145,53 @@ type Business = {
 type Technology = {
       name: string;
 };
+
+type Service = {
+      id: number;
+      name: string;
+      code_repo: string;
+      registry: string;
+      registry_user: string;
+      registry_pwd: string;
+      replicas: number;
+      cpu: number;
+      limit_cpu: number;
+      gpu: number;
+      limit_gpu: number;
+      memory: number;
+      limit_memory: number;
+      disk: number;
+      limit_disk: number;
+      workflow_id: number;
+      ports: Port[];
+      project_id: number;
+};
+
+type Port = {
+      id: number;
+      ingress_path: string;
+      container_port: number;
+      protocol: string;
+};
+
+type Ci = {
+      id: number;
+      version: string;
+      branch: string;
+      tag: string;
+      args: string;
+      description: string;
+      workflow_name: string;
+      service_id: number;
+};
+
+type Cd = {
+      id: number;
+      service_id: number;
+};
+
+type Worklfow = {
+      id: number;
+      name: string;
+      worklfow: string;
+};
