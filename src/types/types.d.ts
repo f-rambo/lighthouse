@@ -147,12 +147,9 @@ type Technology = {
 };
 
 type Service = {
-      id: number;
+      id: string;
       name: string;
       code_repo: string;
-      registry: string;
-      registry_user: string;
-      registry_pwd: string;
       replicas: number;
       cpu: number;
       limit_cpu: number;
@@ -162,36 +159,39 @@ type Service = {
       limit_memory: number;
       disk: number;
       limit_disk: number;
-      workflow_id: number;
+      workflow_id: string;
       ports: Port[];
-      project_id: number;
+      project_id: string;
+      business: string;
+      technology: string;
+      project_name: string;
 };
 
 type Port = {
-      id: number;
+      id: string;
       ingress_path: string;
       container_port: number;
       protocol: string;
 };
 
 type Ci = {
-      id: number;
+      id: string;
       version: string;
       branch: string;
       tag: string;
       args: string;
       description: string;
       workflow_name: string;
-      service_id: number;
+      service_id: string;
 };
 
 type Cd = {
-      id: number;
-      service_id: number;
+      id: string;
+      service_id: string;
 };
 
 type Worklfow = {
-      id: number;
+      id: string;
       name: string;
       worklfow: string;
 };

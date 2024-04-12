@@ -1,6 +1,7 @@
 import Cookies from "js-cookie";
 import { handlerResponse, jsonToQueryString } from "../../common";
 import { json } from "stream/consumers";
+import { Save } from "lucide-react";
 
 const serviceApi = `${process.env.NEXT_PUBLIC_API ?? ""}${
   process.env.NEXT_PUBLIC_API_VERSION ?? ""
@@ -32,6 +33,18 @@ export const ServiceServices = {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
+    });
+    return handlerResponse(res);
+  },
+  async save(service: any) {
+    const token = Cookies.get(tokenKey);
+    const res = await fetch(`${serviceApi}/save`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(service),
     });
     return handlerResponse(res);
   },

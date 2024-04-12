@@ -37,57 +37,19 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { setServers } from "dns";
-import { select } from "@nextui-org/react";
-
-const netProtocols = ["TCP", "UDP"];
-
-const invoices = [
-  {
-    invoice: "INV001",
-    paymentStatus: "Paid",
-    totalAmount: "$250.00",
-    paymentMethod: "Credit Card",
-  },
-  {
-    invoice: "INV002",
-    paymentStatus: "Pending",
-    totalAmount: "$150.00",
-    paymentMethod: "PayPal",
-  },
-  {
-    invoice: "INV003",
-    paymentStatus: "Unpaid",
-    totalAmount: "$350.00",
-    paymentMethod: "Bank Transfer",
-  },
-  {
-    invoice: "INV004",
-    paymentStatus: "Paid",
-    totalAmount: "$450.00",
-    paymentMethod: "Credit Card",
-  },
-  {
-    invoice: "INV005",
-    paymentStatus: "Paid",
-    totalAmount: "$550.00",
-    paymentMethod: "PayPal",
-  },
-  {
-    invoice: "INV006",
-    paymentStatus: "Pending",
-    totalAmount: "$200.00",
-    paymentMethod: "Bank Transfer",
-  },
-  {
-    invoice: "INV007",
-    paymentStatus: "Unpaid",
-    totalAmount: "$300.00",
-    paymentMethod: "Credit Card",
-  },
-];
+import { PageComponent } from "@/components/pagination";
+import {
+  DropdownMenuTrigger,
+  DropdownMenuItem,
+  DropdownMenuContent,
+  DropdownMenu,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import { DotsHorizontalIcon } from "@radix-ui/react-icons";
 
 export default function Service() {
+  const netProtocols = ["TCP", "UDP"];
   const searchParams = useSearchParams();
   const { toast } = useToast();
   const clusterid = searchParams.get("clusterid");
@@ -96,24 +58,25 @@ export default function Service() {
   const [selectedProject, setSelectedProject] = React.useState<Project>();
   const [serviceSearchName, setServiceSearchName] = React.useState("");
   const [page, setPage] = React.useState(1);
-  const [pageSize, setPageSize] = React.useState(10);
+  const [pageCount, setPageCount] = React.useState(0);
   const [addEditOpen, setAddEditOpen] = React.useState(false);
   const [gpuOnOff, setGpuOnOff] = React.useState(false);
   const [selectedService, setSelectedService] = React.useState<Service>();
   const [selectedPorts, setSelectedPorts] = React.useState<Port[]>([
     {
-      id: 0,
+      id: "0",
       ingress_path: "",
       container_port: 0,
       protocol: "",
     },
   ]);
+  const [services, setServices] = React.useState<Service[]>([]);
 
   const addPortInput = () => {
     setSelectedPorts([
       ...selectedPorts,
       {
-        id: selectedPorts.length,
+        id: String(selectedPorts.length),
         ingress_path: "",
         container_port: 0,
         protocol: "",
@@ -121,7 +84,7 @@ export default function Service() {
     ]);
   };
 
-  const removePortInput = (id: number) => {
+  const removePortInput = (id: string) => {
     setSelectedPorts(selectedPorts.filter((item) => item.id !== id));
   };
 
@@ -151,7 +114,9 @@ export default function Service() {
 
   const serviceList = React.useCallback(
     (projectId: string, name: string, page: number, pageSize: number) => {
-      if (!projectId || projectId === "") return;
+      if (!projectId || projectId === "") {
+        projectId = "";
+      }
       ServiceServices.getList({
         project_id: projectId,
         name: name,
@@ -166,6 +131,8 @@ export default function Service() {
           });
           return;
         }
+        setServices(data.services as Service[]);
+        setPageCount(Math.ceil(data.total / pageSize));
       });
     },
     [toast]
@@ -175,8 +142,8 @@ export default function Service() {
   }, [projectList, projectid, clusterid]);
 
   React.useEffect(() => {
-    serviceList(selectedProject?.id as string, "", page, pageSize);
-  }, [serviceList, selectedProject, page, pageSize]);
+    serviceList(selectedProject?.id as string, serviceSearchName, page, 10);
+  }, [serviceList, selectedProject, page, serviceSearchName]);
 
   const updateSelectedService = (changes: any) => {
     setSelectedService((prevState) => ({
@@ -186,18 +153,57 @@ export default function Service() {
     }));
   };
 
-  const updateSelectedPort = (id: number, changes: any) => {
+  const updateSelectedPort = (id: string, changes: any) => {
     setSelectedPorts((prevState) =>
       prevState.map((port) => (port.id === id ? { ...port, ...changes } : port))
     );
   };
 
   const sumbitService = () => {
-    setAddEditOpen(false);
-    if (!selectedService) return;
     console.log(selectedService);
-    console.log(selectedPorts);
-    console.log(gpuOnOff);
+    setAddEditOpen(false);
+    if (!selectedService || !selectedPorts) {
+      toast({
+        title: "service",
+        variant: "destructive",
+        description: "service or port is empty",
+      });
+      return;
+    }
+    if (
+      selectedService.project_id === "" ||
+      selectedService.business === "" ||
+      selectedService.technology === "" ||
+      selectedService.name === "" ||
+      selectedService.code_repo === ""
+    ) {
+      toast({
+        title: "service",
+        variant: "destructive",
+        description: "param is empty",
+      });
+      return;
+    }
+
+    selectedService.ports = selectedPorts;
+    if (!gpuOnOff) {
+      selectedService.gpu = 0;
+      selectedService.limit_gpu = 0;
+    }
+    ServiceServices.save(selectedService).then((data) => {
+      if (data instanceof Error) {
+        toast({
+          title: "service save fail",
+          variant: "destructive",
+          description: data.message,
+        });
+        return;
+      }
+      toast({
+        title: "service",
+        description: "service save success",
+      });
+    });
   };
 
   const AddEdit = () => {
@@ -214,6 +220,111 @@ export default function Service() {
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4 h-5/5 overflow-auto">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="project" className="text-right">
+                Project
+              </Label>
+              <Select
+                onValueChange={(val) =>
+                  updateSelectedService({
+                    project_id: projects.find((project) => project.name === val)
+                      ?.id, // Add null check before accessing 'id' property
+                  })
+                }
+                value={
+                  projects.find(
+                    (project) => project.id === selectedService?.project_id
+                  )?.name
+                }
+              >
+                <SelectTrigger className="col-span-3 w-[360px]">
+                  <SelectValue placeholder="Select a project" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    {Array.isArray(projects) &&
+                      projects?.map((project) => (
+                        <SelectItem key={project.id} value={project.name}>
+                          {project.name}
+                        </SelectItem>
+                      ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="project" className="text-right">
+                Business
+              </Label>
+              <Select
+                onValueChange={(val) =>
+                  updateSelectedService({
+                    business: val,
+                  })
+                }
+                value={selectedService?.business}
+              >
+                <SelectTrigger className="col-span-3 w-[360px]">
+                  <SelectValue placeholder="Select a business" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    {projects
+                      .find(
+                        (project) => project.id === selectedService?.project_id
+                      )
+                      ?.business.map((businessval) => (
+                        <SelectItem
+                          key={businessval.name}
+                          value={businessval.name}
+                        >
+                          {businessval.name}
+                        </SelectItem>
+                      ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="project" className="text-right">
+                Technology
+              </Label>
+              <Select
+                onValueChange={(val) =>
+                  updateSelectedService({
+                    technology: val,
+                  })
+                }
+                value={selectedService?.technology}
+              >
+                <SelectTrigger className="col-span-3 w-[360px]">
+                  <SelectValue placeholder="Select a technology" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    {projects
+                      .find(
+                        (project) => project.id === selectedService?.project_id
+                      )
+                      ?.business.find(
+                        (business) =>
+                          business.name === selectedService?.business
+                      )
+                      ?.technologys.map((technologyval) => (
+                        <SelectItem
+                          key={technologyval.name}
+                          value={technologyval.name}
+                        >
+                          {technologyval.name}
+                        </SelectItem>
+                      ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="name" className="text-right">
                 Name
@@ -404,7 +515,7 @@ export default function Service() {
                       })
                     }
                   />
-                  {portInput.id === 0 && (
+                  {portInput.id === "0" && (
                     <Button
                       onClick={addPortInput}
                       className="ml-3"
@@ -413,7 +524,7 @@ export default function Service() {
                       +
                     </Button>
                   )}
-                  {portInput.id !== 0 && (
+                  {portInput.id !== "0" && (
                     <Button
                       onClick={() => removePortInput(portInput.id)}
                       className="ml-3"
@@ -487,6 +598,8 @@ export default function Service() {
             className="bg-white dark:bg-gray-950 max-w-sm mr-3"
             placeholder="Search services..."
             type="search"
+            value={serviceSearchName}
+            onChange={(e) => setServiceSearchName(e.target.value)}
           />
           <Select
             onValueChange={(val) =>
@@ -514,35 +627,72 @@ export default function Service() {
         </div>
         {AddEdit()}
       </div>
+
       <Table>
         <TableCaption>A list of your services.</TableCaption>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[100px]">Invoice</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Method</TableHead>
-            <TableHead className="text-right">Amount</TableHead>
+            <TableHead>ID</TableHead>
+            <TableHead>Name</TableHead>
+            <TableHead>Project Name</TableHead>
+            <TableHead>Business/Technology</TableHead>
+            <TableHead>Ports</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {invoices.map((invoice) => (
-            <TableRow key={invoice.invoice}>
-              <TableCell className="font-medium">{invoice.invoice}</TableCell>
-              <TableCell>{invoice.paymentStatus}</TableCell>
-              <TableCell>{invoice.paymentMethod}</TableCell>
+          {services.map((service) => (
+            <TableRow key={service.id}>
+              <TableCell className="font-medium">{service.id}</TableCell>
+              <TableCell>{service.name}</TableCell>
+              <TableCell>{service.project_name}</TableCell>
+              <TableCell>
+                {service.business}/{service.technology}
+              </TableCell>
+              <TableCell>
+                {service.ports.map((port) => (
+                  <div key={port.id}>
+                    {port.protocol}/{port.container_port}
+                  </div>
+                ))}
+              </TableCell>
               <TableCell className="text-right">
-                {invoice.totalAmount}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="h-8 w-8 p-0">
+                      <span className="sr-only">Open menu</span>
+                      <DotsHorizontalIcon className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                    <DropdownMenuItem
+                      onClick={() => navigator.clipboard.writeText(service.id)}
+                    >
+                      Copy project ID
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem>Details</DropdownMenuItem>
+                    <DropdownMenuItem>Go build</DropdownMenuItem>
+                    <DropdownMenuItem>Edit</DropdownMenuItem>
+                    <DropdownMenuItem>Delete</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </TableCell>
             </TableRow>
           ))}
         </TableBody>
         <TableFooter>
-          <TableRow>
-            <TableCell colSpan={3}>Total</TableCell>
-            <TableCell className="text-right">$2,500.00</TableCell>
-          </TableRow>
+          <TableRow></TableRow>
         </TableFooter>
       </Table>
+      <div className="mt-3">
+        <PageComponent
+          totalPages={pageCount}
+          pageRange={3}
+          onPageChange={(page: number) => setPage(page)}
+        />
+      </div>
     </div>
   );
 }
