@@ -28,7 +28,7 @@ export default function LoginPage() {
     if (router.back() !== undefined) {
       router.back();
     } else {
-      router.push("/");
+      router.push("/home");
     }
   }, [router]);
 
@@ -62,7 +62,7 @@ export default function LoginPage() {
       if (router.back() !== undefined) {
         router.back();
       } else {
-        router.push("/");
+        router.push("/home");
       }
     });
   };

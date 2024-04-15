@@ -325,7 +325,7 @@ export default function AppRepoPage() {
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={() =>
-                  router.push("/cluster/app?repositorieid=" + repositorie.id)
+                  router.push("/home/app?repositorieid=" + repositorie.id)
                 }
               >
                 View Apps

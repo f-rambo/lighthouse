@@ -1,4 +1,4 @@
-import Layout from "../../layout/cluster-layout";
+import Layout from "@/layout/layout";
 
 export default function RootLayout({
   children,

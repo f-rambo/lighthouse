@@ -52,7 +52,6 @@ import { Project, Technology, Business } from "@/types/types";
 import { ProjectServices } from "@/services/project/v1alpha1/project";
 import { useToast } from "@/components/ui/use-toast";
 import { useRouter } from "next/navigation";
-import { useSearchParams } from "next/navigation";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Popover,
@@ -64,7 +63,11 @@ interface BusinessCheckedStates {
   [key: string]: boolean;
 }
 
-export default function AppRepoPage() {
+export default function AppRepoPage({
+  params,
+}: {
+  params: { clusterid: string };
+}) {
   const router = useRouter();
   const { toast } = useToast();
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -74,8 +77,7 @@ export default function AppRepoPage() {
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
-  const searchParams = useSearchParams();
-  const clusterid = searchParams.get("clusterid");
+  const clusterid = params.clusterid;
   const [data, setData] = React.useState<Project[]>([]);
   const [AddEditProjectOpen, setAddEditProjectOpen] = React.useState(false);
   const [projectName, setProjectName] = React.useState("");
@@ -606,28 +608,11 @@ export default function AppRepoPage() {
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                onClick={() =>
-                  router.push(
-                    "/project/service?clusterid=" +
-                      clusterid +
-                      "&projectid=" +
-                      project.id
-                  )
-                }
+                onClick={() => {
+                  window.location.href = `/home/cluster/${clusterid}/project/${project.id}`;
+                }}
               >
-                View Services
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() =>
-                  router.push(
-                    "/project/service?clusterid=" +
-                      clusterid +
-                      "&projectid=" +
-                      project.id
-                  )
-                }
-              >
-                View Apps
+                Details
               </DropdownMenuItem>
               <DropdownMenuItem
                 disabled={project.state === "running"}

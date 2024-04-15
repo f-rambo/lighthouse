@@ -157,7 +157,7 @@ export default function ClusterNewPage() {
             variant: "destructive",
           });
           setCheckClusterConfigButton(false);
-          router.push(`/cluster/list/new?clusterid=${cluster.id}`);
+          router.push(`/home/cluster/new?clusterid=${cluster.id}`);
           return;
         }
         toast({
@@ -166,7 +166,7 @@ export default function ClusterNewPage() {
           duration: 5000,
         });
         setCheckClusterConfigButton(false);
-        router.push(`/cluster/list/new?clusterid=${cluster.id}`);
+        router.push(`/home/cluster/new?clusterid=${cluster.id}`);
       });
     });
   };
@@ -196,7 +196,7 @@ export default function ClusterNewPage() {
         description: "Deploying the cluster...",
         duration: 5000,
       });
-      router.push(`/cluster/list/detail?clusterid=${cluster?.id}`);
+      router.push(`/home/cluster/${cluster?.id}/detail`);
     });
   };
 

@@ -252,14 +252,12 @@ export default function ClusterListPage() {
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                onClick={() => router.push(`/project?clusterid=${cluster.id}`)}
+                onClick={() => (window.location.href = `cluster/${cluster.id}`)}
               >
                 View Projects
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() =>
-                  router.push(`/cluster/list/detail?clusterid=${cluster.id}`)
-                }
+                onClick={() => router.push(`cluster/${cluster.id}/detail`)}
               >
                 View Detail
               </DropdownMenuItem>
@@ -272,7 +270,7 @@ export default function ClusterListPage() {
               <DropdownMenuItem
                 disabled={cluster.state === "running"}
                 onClick={() => {
-                  router.push(`/cluster/list/new?clusterid=${cluster.id}`);
+                  router.push(`/home/cluster/new?clusterid=${cluster.id}`);
                 }}
               >
                 Edit
@@ -349,7 +347,7 @@ export default function ClusterListPage() {
         <Button
           variant="outline"
           onClick={() => {
-            router.push("/cluster/list/new");
+            router.push("/home/cluster/new");
           }}
         >
           Add New

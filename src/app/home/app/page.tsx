@@ -310,7 +310,7 @@ export default function AppPage() {
                           });
                           return;
                         }
-                        let url = `/cluster/app/detail`;
+                        let url = `/home/app/detail`;
                         if (repositorieid) {
                           url += `?repositorieid=${repositorieid}&appname=${app.name}&appversionnumber=${app.versions[0].version}`;
                         } else {

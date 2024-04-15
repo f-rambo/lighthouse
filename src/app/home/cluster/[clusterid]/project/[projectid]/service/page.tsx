@@ -1,6 +1,5 @@
 "use client";
 import * as React from "react";
-import { useSearchParams } from "next/navigation";
 import {
   Table,
   TableBody,
@@ -48,12 +47,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { DotsHorizontalIcon } from "@radix-ui/react-icons";
 
-export default function Service() {
+export default function ServicePage({
+  params,
+}: {
+  params: { clusterid: string; projectid: string };
+}) {
   const netProtocols = ["TCP", "UDP"];
-  const searchParams = useSearchParams();
   const { toast } = useToast();
-  const clusterid = searchParams.get("clusterid");
-  const projectid = searchParams.get("projectid");
   const [projects, setProjects] = React.useState<Project[]>([]);
   const [selectedProject, setSelectedProject] = React.useState<Project>();
   const [serviceSearchName, setServiceSearchName] = React.useState("");
@@ -138,8 +138,8 @@ export default function Service() {
     [toast]
   );
   React.useEffect(() => {
-    projectList(projectid as string, clusterid as string);
-  }, [projectList, projectid, clusterid]);
+    projectList(params.projectid, params.clusterid);
+  }, [projectList, params.projectid, params.clusterid]);
 
   React.useEffect(() => {
     serviceList(selectedProject?.id as string, serviceSearchName, page, 10);
@@ -157,6 +157,21 @@ export default function Service() {
     setSelectedPorts((prevState) =>
       prevState.map((port) => (port.id === id ? { ...port, ...changes } : port))
     );
+  };
+
+  const getSelectedService = (id: string) => {
+    ServiceServices.get(id).then((data) => {
+      if (data instanceof Error) {
+        toast({
+          title: "service get fail",
+          variant: "destructive",
+          description: data.message,
+        });
+        return;
+      }
+      setSelectedService(data as Service);
+      setSelectedPorts(data.ports as Port[]);
+    });
   };
 
   const sumbitService = () => {
@@ -199,9 +214,28 @@ export default function Service() {
         });
         return;
       }
+      serviceList(selectedProject?.id as string, serviceSearchName, page, 10);
       toast({
         title: "service",
         description: "service save success",
+      });
+    });
+  };
+
+  const deleteSerivce = (id: string) => {
+    ServiceServices.delete(id).then((data) => {
+      if (data instanceof Error) {
+        toast({
+          title: "service delete fail",
+          variant: "destructive",
+          description: data.message,
+        });
+        return;
+      }
+      serviceList(selectedProject?.id as string, serviceSearchName, page, 10);
+      toast({
+        title: "service",
+        description: "service delete success",
       });
     });
   };
@@ -339,6 +373,7 @@ export default function Service() {
                     name: e.target.value,
                   })
                 }
+                value={selectedService?.name}
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
@@ -355,6 +390,7 @@ export default function Service() {
                     code_repo: e.target.value,
                   })
                 }
+                value={selectedService?.code_repo}
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
@@ -371,6 +407,7 @@ export default function Service() {
                     replicas: parseInt(e.target.value),
                   })
                 }
+                value={selectedService?.replicas}
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
@@ -387,6 +424,7 @@ export default function Service() {
                     cpu: parseFloat(e.target.value),
                   })
                 }
+                value={selectedService?.cpu}
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
@@ -403,6 +441,7 @@ export default function Service() {
                     limit_cpu: parseFloat(e.target.value),
                   })
                 }
+                value={selectedService?.limit_cpu}
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
@@ -419,6 +458,7 @@ export default function Service() {
                     memory: parseFloat(e.target.value),
                   })
                 }
+                value={selectedService?.memory}
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
@@ -435,6 +475,7 @@ export default function Service() {
                     limit_memory: parseFloat(e.target.value),
                   })
                 }
+                value={selectedService?.limit_memory}
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
@@ -451,6 +492,7 @@ export default function Service() {
                     disk: parseFloat(e.target.value),
                   })
                 }
+                value={selectedService?.disk}
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
@@ -467,29 +509,30 @@ export default function Service() {
                     limit_disk: parseFloat(e.target.value),
                   })
                 }
+                value={selectedService?.limit_disk}
               />
             </div>
-            {selectedPorts.map((portInput) => (
+            {selectedPorts.map((selectPort) => (
               <div
-                key={portInput.id}
+                key={selectPort.id}
                 className="grid grid-cols-4 items-center gap-4"
               >
                 <Label
-                  htmlFor={`portprotocol${portInput.id}`}
+                  htmlFor={`portprotocol${selectPort.id}`}
                   className="text-right"
                 >
                   Port
                 </Label>
                 <div className="flex">
                   <Select
-                    key={portInput.id}
+                    key={selectPort.id}
                     onValueChange={(v) =>
-                      updateSelectedPort(portInput.id, {
+                      updateSelectedPort(selectPort.id, {
                         protocol: v,
                       })
                     }
                     value={
-                      selectedPorts.find((port) => port.id === portInput.id)
+                      selectedPorts.find((port) => port.id === selectPort.id)
                         ?.protocol
                     }
                   >
@@ -510,12 +553,16 @@ export default function Service() {
                     type="number"
                     className="col-span-3 w-[160px] ml-3"
                     onChange={(e) =>
-                      updateSelectedPort(portInput.id, {
+                      updateSelectedPort(selectPort.id, {
                         container_port: parseInt(e.target.value),
                       })
                     }
+                    value={
+                      selectedPorts.find((port) => port.id === selectPort.id)
+                        ?.container_port
+                    }
                   />
-                  {portInput.id === "0" && (
+                  {selectPort.id === "0" && (
                     <Button
                       onClick={addPortInput}
                       className="ml-3"
@@ -524,9 +571,9 @@ export default function Service() {
                       +
                     </Button>
                   )}
-                  {portInput.id !== "0" && (
+                  {selectPort.id !== "0" && (
                     <Button
-                      onClick={() => removePortInput(portInput.id)}
+                      onClick={() => removePortInput(selectPort.id)}
                       className="ml-3"
                       variant="outline"
                     >
@@ -559,6 +606,7 @@ export default function Service() {
                         gpu: parseInt(e.target.value),
                       })
                     }
+                    value={selectedService?.gpu}
                   />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
@@ -575,6 +623,7 @@ export default function Service() {
                         limit_gpu: parseInt(e.target.value),
                       })
                     }
+                    value={selectedService?.limit_gpu}
                   />
                 </div>
               </>
@@ -672,10 +721,24 @@ export default function Service() {
                       Copy project ID
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem>Details</DropdownMenuItem>
-                    <DropdownMenuItem>Go build</DropdownMenuItem>
-                    <DropdownMenuItem>Edit</DropdownMenuItem>
-                    <DropdownMenuItem>Delete</DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() =>
+                        (window.location.href = `/home/cluster/${params.clusterid}/project/${params.projectid}/service/${service.id}`)
+                      }
+                    >
+                      Details
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        setAddEditOpen(true);
+                        getSelectedService(service.id);
+                      }}
+                    >
+                      Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => deleteSerivce(service.id)}>
+                      Delete
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </TableCell>

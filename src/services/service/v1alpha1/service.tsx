@@ -48,4 +48,26 @@ export const ServiceServices = {
     });
     return handlerResponse(res);
   },
+  async get(id: string) {
+    const token = Cookies.get(tokenKey);
+    const res = await fetch(`${serviceApi}/get?id=${id}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return handlerResponse(res);
+  },
+  async delete(id: string) {
+    const token = Cookies.get(tokenKey);
+    const res = await fetch(`${serviceApi}/delete?id=${id}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return handlerResponse(res);
+  },
 };

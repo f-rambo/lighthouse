@@ -1,59 +1,59 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { ChildContainerProps } from "../types/types";
+import { ChildContainerProps } from "@/types/types";
 import Link from "next/link";
 import HeaderComponent from "./header";
-import { ShoppingCartIcon, PackageIcon } from "@/components/icon";
-import { HomeIcon, BackpackIcon, TableIcon } from "@radix-ui/react-icons";
-import { useSearchParams, useRouter } from "next/navigation";
-import { useToast } from "@/components/ui/use-toast";
-
-let menu = [
-  {
-    title: "Dashboard",
-    icon: HomeIcon,
-    path: "/project",
-  },
-  {
-    title: "Projects",
-    icon: TableIcon,
-    path: "/project/list",
-  },
-  {
-    title: "Services",
-    icon: PackageIcon,
-    path: "/project/service",
-  },
-  {
-    title: "Apps",
-    icon: ShoppingCartIcon,
-    path: "/project/app",
-  },
-];
+import { homeMenu, projectMenu, clusterMenu, serviceMenu } from "./menu";
+import { HomeIcon } from "@radix-ui/react-icons";
 
 const Layout = ({ children }: ChildContainerProps) => {
   const [activePath, setActivePath] = useState("");
   useEffect(() => {
     setActivePath(window.location.pathname);
   }, []);
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const { toast } = useToast();
-  const clusterid = searchParams.get("clusterid");
-  const projectid = searchParams.get("projectid");
-  if (!clusterid || (clusterid as string) == "") {
-    toast({
-      title: "project page fail",
-      variant: "destructive",
-      description: "clusterid is required",
-    });
-    router.push("/cluster/list");
-    return;
+  const ids = activePath.match(/\d+/g);
+  let clusterid = "";
+  let projectid = "";
+  let serviceid = "";
+  const numberArray = ids?.map(Number) ?? [];
+  for (let i = 0; i < numberArray.length; i++) {
+    if (i === 0) {
+      clusterid = ids?.[i] ?? "";
+    }
+    if (i === 1) {
+      projectid = ids?.[i] ?? "";
+    }
+    if (i === 2) {
+      serviceid = ids?.[i] ?? "";
+    }
   }
-  let urlParam = `?clusterid=${clusterid}`;
-  if (projectid) {
-    urlParam += `&projectid=${projectid}`;
+  let menu = homeMenu;
+  if (numberArray.length === 1) {
+    for (let i = 0; i < clusterMenu.length; i++) {
+      clusterMenu[i].path = clusterMenu[i].path.replace("clusterid", clusterid);
+      if (clusterMenu[i].path === activePath) {
+        menu = clusterMenu;
+      }
+    }
+  } else if (numberArray.length === 2) {
+    for (let i = 0; i < projectMenu.length; i++) {
+      projectMenu[i].path = projectMenu[i].path.replace("clusterid", clusterid);
+      projectMenu[i].path = projectMenu[i].path.replace("projectid", projectid);
+      if (projectMenu[i].path === activePath) {
+        menu = projectMenu;
+      }
+    }
+  } else if (numberArray.length === 3) {
+    for (let i = 0; i < serviceMenu.length; i++) {
+      serviceMenu[i].path = serviceMenu[i].path.replace("clusterid", clusterid);
+      serviceMenu[i].path = serviceMenu[i].path.replace("projectid", projectid);
+      serviceMenu[i].path = serviceMenu[i].path.replace("serviceid", serviceid);
+      if (serviceMenu[i].path === activePath) {
+        menu = serviceMenu;
+      }
+    }
   }
+
   return (
     <React.Fragment>
       <div className="grid min-h-screen w-full overflow-hidden lg:grid-cols-[280px_1fr]">
@@ -61,24 +61,25 @@ const Layout = ({ children }: ChildContainerProps) => {
           <div className="flex flex-col gap-2">
             <div className="flex h-[60px] items-center px-6">
               <Link className="flex items-center gap-2 font-semibold" href="/">
-                <BackpackIcon className="h-6 w-6" />
-                <span className="">Ocean</span>
+                <HomeIcon className="h-6 w-6" />
+                <span className="">Home</span>
               </Link>
             </div>
             <div className="flex-1">
               <nav className="grid items-start px-4 text-sm font-medium">
                 {menu.map((item, index) => {
-                  const isActive = item.path === activePath;
+                  const itemPath = item.path;
+                  const isActive = itemPath === activePath;
                   const className = isActive
                     ? "flex items-center gap-3 rounded-lg bg-gray-100 px-3 py-2 text-gray-900  transition-all hover:text-gray-900 dark:bg-gray-800 dark:text-gray-50 dark:hover:text-gray-50"
                     : "flex items-center gap-3 rounded-lg px-3 py-2 text-gray-500 transition-all hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-50";
 
                   return (
                     <Link
-                      href={item.path + urlParam}
+                      href={itemPath}
                       key={index}
                       className={className}
-                      onClick={() => setActivePath(item.path)}
+                      onClick={() => setActivePath(itemPath)}
                     >
                       <item.icon className="h-4 w-4" />
                       {item.title}

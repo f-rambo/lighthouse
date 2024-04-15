@@ -1,6 +1,5 @@
 "use client";
 import React from "react";
-import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState, useCallback } from "react";
 import { useToast } from "@/components/ui/use-toast";
@@ -57,10 +56,13 @@ import {
 } from "@/components/ui/dialog";
 import YamlEditor from "@focus-reactive/react-yaml";
 
-export default function DetailsPage() {
+export default function DetailsPage({
+  params,
+}: {
+  params: { clusterid: string };
+}) {
   const { toast } = useToast();
-  const searchParams = useSearchParams();
-  const clusterid = searchParams.get("clusterid") as string;
+  const clusterid = params.clusterid;
   const [cluster, setCluster] = useState<Cluster>();
   const [data, setData] = useState<Node[]>([]);
   const [sorting, setSorting] = React.useState<SortingState>([]);
