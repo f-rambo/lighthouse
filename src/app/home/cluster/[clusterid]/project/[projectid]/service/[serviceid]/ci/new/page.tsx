@@ -1,4 +1,7 @@
-export default function ServiceCiPage({
+"use client";
+import React from "react";
+
+export default function CINewPage({
   params,
 }: {
   params: { clusterid: string; projectid: string; serviceid: string };

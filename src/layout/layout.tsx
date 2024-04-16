@@ -3,14 +3,26 @@ import React, { useState, useEffect } from "react";
 import { ChildContainerProps } from "@/types/types";
 import Link from "next/link";
 import HeaderComponent from "./header";
-import { homeMenu, projectMenu, clusterMenu, serviceMenu } from "./menu";
-import { HomeIcon } from "@radix-ui/react-icons";
+import {
+  homeMenu,
+  projectMenu,
+  clusterMenu,
+  serviceMenu,
+  breadCrumbCluster,
+  breadCrumbProject,
+  breadCrumbService,
+} from "./menu";
+import { BreadCrumb } from "@/types/types";
+import { IoIosCloudDone } from "react-icons/io";
 
 const Layout = ({ children }: ChildContainerProps) => {
   const [activePath, setActivePath] = useState("");
   useEffect(() => {
     setActivePath(window.location.pathname);
   }, []);
+  if (activePath === "") {
+    return null;
+  }
   const ids = activePath.match(/\d+/g);
   let clusterid = "";
   let projectid = "";
@@ -27,31 +39,52 @@ const Layout = ({ children }: ChildContainerProps) => {
       serviceid = ids?.[i] ?? "";
     }
   }
-  let menu = homeMenu;
-  if (numberArray.length === 1) {
-    for (let i = 0; i < clusterMenu.length; i++) {
-      clusterMenu[i].path = clusterMenu[i].path.replace("clusterid", clusterid);
-      if (clusterMenu[i].path === activePath) {
-        menu = clusterMenu;
-      }
-    }
-  } else if (numberArray.length === 2) {
-    for (let i = 0; i < projectMenu.length; i++) {
-      projectMenu[i].path = projectMenu[i].path.replace("clusterid", clusterid);
-      projectMenu[i].path = projectMenu[i].path.replace("projectid", projectid);
-      if (projectMenu[i].path === activePath) {
-        menu = projectMenu;
-      }
-    }
-  } else if (numberArray.length === 3) {
+  let menu: { path: string; icon: React.ElementType; title: string }[] = [];
+  let breadCrumbs: BreadCrumb[] = [];
+  if (numberArray.length === 3) {
     for (let i = 0; i < serviceMenu.length; i++) {
       serviceMenu[i].path = serviceMenu[i].path.replace("clusterid", clusterid);
       serviceMenu[i].path = serviceMenu[i].path.replace("projectid", projectid);
       serviceMenu[i].path = serviceMenu[i].path.replace("serviceid", serviceid);
-      if (serviceMenu[i].path === activePath) {
+      const pathLength = serviceMenu[i].path.length;
+      const newactivePath = activePath.slice(0, pathLength);
+      if (serviceMenu[i].path === newactivePath) {
         menu = serviceMenu;
+        breadCrumbs = breadCrumbService;
       }
     }
+  }
+  if (numberArray.length === 2 && menu.length === 0) {
+    for (let i = 0; i < projectMenu.length; i++) {
+      projectMenu[i].path = projectMenu[i].path.replace("clusterid", clusterid);
+      projectMenu[i].path = projectMenu[i].path.replace("projectid", projectid);
+      const pathLength = serviceMenu[i].path.length;
+      const newactivePath = activePath.slice(0, pathLength);
+      if (projectMenu[i].path === newactivePath) {
+        menu = projectMenu;
+        breadCrumbs = breadCrumbProject;
+      }
+    }
+  }
+  if (numberArray.length === 1 && menu.length === 0) {
+    for (let i = 0; i < clusterMenu.length; i++) {
+      clusterMenu[i].path = clusterMenu[i].path.replace("clusterid", clusterid);
+      const pathLength = serviceMenu[i].path.length;
+      const newactivePath = activePath.slice(0, pathLength);
+      if (clusterMenu[i].path === newactivePath) {
+        menu = clusterMenu;
+        breadCrumbs = breadCrumbCluster;
+      }
+    }
+  }
+  if (menu.length === 0 || numberArray.length === 0) {
+    menu = homeMenu;
+  }
+
+  for (let i = 0; i < breadCrumbs.length; i++) {
+    breadCrumbs[i].path = breadCrumbs[i].path.replace("clusterid", clusterid);
+    breadCrumbs[i].path = breadCrumbs[i].path.replace("projectid", projectid);
+    breadCrumbs[i].path = breadCrumbs[i].path.replace("serviceid", serviceid);
   }
 
   return (
@@ -60,9 +93,12 @@ const Layout = ({ children }: ChildContainerProps) => {
         <div className="hidden border-r bg-gray-100/40 lg:block dark:bg-gray-800/40">
           <div className="flex flex-col gap-2">
             <div className="flex h-[60px] items-center px-6">
-              <Link className="flex items-center gap-2 font-semibold" href="/">
-                <HomeIcon className="h-6 w-6" />
-                <span className="">Home</span>
+              <Link
+                className="flex items-center gap-2 font-semibold"
+                href="/home"
+              >
+                <IoIosCloudDone className="h-6 w-6" />
+                <span className="">Ocean</span>
               </Link>
             </div>
             <div className="flex-1">
@@ -91,7 +127,7 @@ const Layout = ({ children }: ChildContainerProps) => {
           </div>
         </div>
         <div className="flex flex-col">
-          {HeaderComponent()}
+          {HeaderComponent(breadCrumbs)}
           <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">
             {children}
           </main>

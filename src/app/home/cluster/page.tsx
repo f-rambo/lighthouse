@@ -254,12 +254,12 @@ export default function ClusterListPage() {
               <DropdownMenuItem
                 onClick={() => (window.location.href = `cluster/${cluster.id}`)}
               >
-                View Projects
+                Projects
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => router.push(`cluster/${cluster.id}/detail`)}
               >
-                View Detail
+                Detail
               </DropdownMenuItem>
               <DropdownMenuItem
                 disabled={cluster.state !== "running" || cluster.config === ""}

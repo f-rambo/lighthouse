@@ -104,3 +104,36 @@ export const serviceMenu = [
     path: serviceMenuPrefix + "/cd",
   },
 ];
+
+export const breadCrumbCluster = [
+  {
+    title: "Cluster",
+    path: clusterMenuPrefix,
+  },
+];
+
+export const breadCrumbProject = [
+  {
+    title: "Cluster",
+    path: clusterMenuPrefix,
+  },
+  {
+    title: "Project",
+    path: projectMenuPrefix,
+  },
+];
+
+export const breadCrumbService = [
+  {
+    title: "Cluster",
+    path: clusterMenuPrefix,
+  },
+  {
+    title: "Project",
+    path: projectMenuPrefix,
+  },
+  {
+    title: "Service",
+    path: serviceMenuPrefix,
+  },
+];

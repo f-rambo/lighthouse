@@ -16,7 +16,6 @@ import {
   SelectContent,
   SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -54,8 +53,7 @@ export default function ServicePage({
 }) {
   const netProtocols = ["TCP", "UDP"];
   const { toast } = useToast();
-  const [projects, setProjects] = React.useState<Project[]>([]);
-  const [selectedProject, setSelectedProject] = React.useState<Project>();
+  const [project, setProject] = React.useState<Project>();
   const [serviceSearchName, setServiceSearchName] = React.useState("");
   const [page, setPage] = React.useState(1);
   const [pageCount, setPageCount] = React.useState(0);
@@ -88,25 +86,18 @@ export default function ServicePage({
     setSelectedPorts(selectedPorts.filter((item) => item.id !== id));
   };
 
-  const projectList = React.useCallback(
-    (projectid: string, clusterid: string) => {
-      ProjectServices.getList(clusterid as string).then((data) => {
+  const getProject = React.useCallback(
+    (projectid: string) => {
+      ProjectServices.getDetail(projectid).then((data) => {
         if (data instanceof Error) {
           toast({
-            title: "projects items fail",
+            title: "project item fail",
             variant: "destructive",
             description: data.message,
           });
           return;
         }
-        const projects = data.projects as Project[];
-        setProjects(projects);
-        if (projects.length == 0) {
-          return;
-        }
-        setSelectedProject(
-          projects.find((project) => project.id === projectid)
-        );
+        setProject(data as Project);
       });
     },
     [toast]
@@ -137,17 +128,18 @@ export default function ServicePage({
     },
     [toast]
   );
-  React.useEffect(() => {
-    projectList(params.projectid, params.clusterid);
-  }, [projectList, params.projectid, params.clusterid]);
 
   React.useEffect(() => {
-    serviceList(selectedProject?.id as string, serviceSearchName, page, 10);
-  }, [serviceList, selectedProject, page, serviceSearchName]);
+    getProject(params.projectid);
+  }, [params.projectid, getProject]);
+
+  React.useEffect(() => {
+    serviceList(params.projectid, serviceSearchName, page, 10);
+  }, [serviceList, params.projectid, page, serviceSearchName]);
 
   const updateSelectedService = (changes: any) => {
     setSelectedService((prevState) => ({
-      id: prevState?.id || 0, // provide a default value if id is undefined
+      id: prevState?.id || 0,
       ...prevState,
       ...changes,
     }));
@@ -175,7 +167,6 @@ export default function ServicePage({
   };
 
   const sumbitService = () => {
-    console.log(selectedService);
     setAddEditOpen(false);
     if (!selectedService || !selectedPorts) {
       toast({
@@ -185,6 +176,7 @@ export default function ServicePage({
       });
       return;
     }
+    selectedService.project_id = params.projectid;
     if (
       selectedService.project_id === "" ||
       selectedService.business === "" ||
@@ -214,7 +206,7 @@ export default function ServicePage({
         });
         return;
       }
-      serviceList(selectedProject?.id as string, serviceSearchName, page, 10);
+      serviceList(project?.id as string, serviceSearchName, page, 10);
       toast({
         title: "service",
         description: "service save success",
@@ -232,7 +224,7 @@ export default function ServicePage({
         });
         return;
       }
-      serviceList(selectedProject?.id as string, serviceSearchName, page, 10);
+      serviceList(project?.id as string, serviceSearchName, page, 10);
       toast({
         title: "service",
         description: "service delete success",
@@ -259,29 +251,25 @@ export default function ServicePage({
                 Project
               </Label>
               <Select
+                disabled
                 onValueChange={(val) =>
                   updateSelectedService({
-                    project_id: projects.find((project) => project.name === val)
-                      ?.id, // Add null check before accessing 'id' property
+                    project_id: params.projectid,
                   })
                 }
-                value={
-                  projects.find(
-                    (project) => project.id === selectedService?.project_id
-                  )?.name
-                }
+                value={project?.name}
               >
                 <SelectTrigger className="col-span-3 w-[360px]">
                   <SelectValue placeholder="Select a project" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
-                    {Array.isArray(projects) &&
-                      projects?.map((project) => (
-                        <SelectItem key={project.id} value={project.name}>
-                          {project.name}
-                        </SelectItem>
-                      ))}
+                    <SelectItem
+                      key={project?.id}
+                      value={project?.name as string}
+                    >
+                      {project?.name}
+                    </SelectItem>
                   </SelectGroup>
                 </SelectContent>
               </Select>
@@ -304,18 +292,14 @@ export default function ServicePage({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
-                    {projects
-                      .find(
-                        (project) => project.id === selectedService?.project_id
-                      )
-                      ?.business.map((businessval) => (
-                        <SelectItem
-                          key={businessval.name}
-                          value={businessval.name}
-                        >
-                          {businessval.name}
-                        </SelectItem>
-                      ))}
+                    {project?.business.map((businessval) => (
+                      <SelectItem
+                        key={businessval.name}
+                        value={businessval.name}
+                      >
+                        {businessval.name}
+                      </SelectItem>
+                    ))}
                   </SelectGroup>
                 </SelectContent>
               </Select>
@@ -338,11 +322,8 @@ export default function ServicePage({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
-                    {projects
+                    {project?.business
                       .find(
-                        (project) => project.id === selectedService?.project_id
-                      )
-                      ?.business.find(
                         (business) =>
                           business.name === selectedService?.business
                       )
@@ -650,29 +631,6 @@ export default function ServicePage({
             value={serviceSearchName}
             onChange={(e) => setServiceSearchName(e.target.value)}
           />
-          <Select
-            onValueChange={(val) =>
-              setSelectedProject(
-                projects.find((project) => project.name === val)
-              )
-            }
-            value={selectedProject?.name}
-          >
-            <SelectTrigger className="max-w-64">
-              <SelectValue placeholder="Select a project" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectLabel>Projects</SelectLabel>
-                {Array.isArray(projects) &&
-                  projects?.map((project) => (
-                    <SelectItem key={project.id} value={project.name}>
-                      {project.name}
-                    </SelectItem>
-                  ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
         </div>
         {AddEdit()}
       </div>

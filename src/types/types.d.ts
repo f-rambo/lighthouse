@@ -195,3 +195,9 @@ type Worklfow = {
       name: string;
       worklfow: string;
 };
+
+
+type BreadCrumb = {
+      path: string;
+      title: string;
+};
