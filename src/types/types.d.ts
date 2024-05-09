@@ -134,7 +134,7 @@ type Project = {
       cluster_id: string;
       state: string;
       business: Business[];
-      business_technology: string; // ---
+      business_technology: string;
 };
 
 type Business = {
@@ -190,14 +190,39 @@ type Cd = {
       service_id: string;
 };
 
-type Worklfow = {
-      id: string;
-      name: string;
-      worklfow: string;
-};
-
-
 type BreadCrumb = {
       path: string;
       title: string;
 };
+
+type Worklfow = {
+      id: string;
+      name: string;
+      description: string;
+      steps: wfStep[];
+      templates: wfTemplate[];
+}
+
+type WfStep = {
+      name: string;
+      tasks: wfTask[];
+      default: boolean;
+      previous_step: string;
+}
+
+type WfTask = {
+      name: string;
+      template_name: string;
+      default: boolean;
+}
+
+type WfTemplate = {
+      name: string;
+      image: string;
+      command: string[];
+      args: string[];
+      source: string;
+      is_script: boolean;
+      previous_task: string;
+}
+

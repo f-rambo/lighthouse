@@ -10,13 +10,20 @@ export default async function Middleware(request: NextRequest) {
         const token = request.cookies.get(tokenKey);
         const user = request.cookies.get(userKey);
         if (user) {
-            return NextResponse.next();
+            const dateTime = new Date();
+            const userObj = JSON.parse(user.value);
+            const startDateTime = new Date(userObj.start_time);
+            const diffTime = dateTime.getTime() - startDateTime.getTime();
+            if (diffTime > 60 * 60 * 1000) {
+                return NextResponse.next();
+            }
         }
         const data = await UserService.userInfo(token?.value);
         if (data instanceof Error) {
             throw data;
         }
-        const userInfo = data as User
+        let userInfo = data as User
+        userInfo.start_time = new Date().getTime();
         const response = NextResponse.next()
         response.cookies.set({
             name: tokenKey,
@@ -30,8 +37,6 @@ export default async function Middleware(request: NextRequest) {
             path: '/',
             maxAge: userKeyMaxAge
         })
-        let currentDateTime = new Date();
-        console.log(currentDateTime);
         return response;
     } catch (error) {
         console.log('middleware error:', error);

@@ -385,7 +385,8 @@ export default function AppRepoPage({
           <DialogHeader>
             <DialogTitle>project</DialogTitle>
             <DialogDescription>
-              Make changes to Project here. Click save when you are done.
+              Make changes to Project here. Click save when you are done. Todo
+              需要在新建项目的时候增加配额
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">

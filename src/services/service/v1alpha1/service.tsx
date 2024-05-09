@@ -70,4 +70,53 @@ export const ServiceServices = {
     });
     return handlerResponse(res);
   },
+  async getWorkflow(serviceid: string, args: string) {
+    const token = Cookies.get(tokenKey);
+    const res = await fetch(
+      `${serviceApi}/workflow?id=${serviceid}&wf_args=${args}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    return handlerResponse(res);
+  },
+  async saveWorkflow(serviceid: string, wfType: string, workflow: any) {
+    const token = Cookies.get(tokenKey);
+    const res = await fetch(`${serviceApi}/workflow?id=${serviceid}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        id: serviceid,
+        wf_type: wfType,
+        workflow: workflow,
+      }),
+    });
+    return handlerResponse(res);
+  },
+  async commitWorklfow(serviceid: string, wfType: string, workflowid: string) {
+    const token = Cookies.get(tokenKey);
+    const res = await fetch(
+      `${serviceApi}/commit?id=${serviceid}&wf_type=${wfType}&wf_id=${workflowid}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          id: serviceid,
+          wf_type: wfType,
+          workflow_id: workflowid,
+        }),
+      }
+    );
+    return handlerResponse(res);
+  },
 };
