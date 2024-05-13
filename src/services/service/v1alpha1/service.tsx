@@ -119,4 +119,26 @@ export const ServiceServices = {
     );
     return handlerResponse(res);
   },
+  async GetServiceCis(
+    serviceid: string,
+    version: string,
+    page: number,
+    pageSize: number
+  ) {
+    const token = Cookies.get(tokenKey);
+    const param = jsonToQueryString({
+      service_id: serviceid,
+      version: version,
+      page: page,
+      page_size: pageSize,
+    });
+    const res = await fetch(`${serviceApi}/cis?${param}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return handlerResponse(res);
+  },
 };

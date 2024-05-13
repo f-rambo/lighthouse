@@ -180,9 +180,14 @@ type Ci = {
       branch: string;
       tag: string;
       args: string;
+      state: string;
       description: string;
       workflow_name: string;
       service_id: string;
+      created_at: string;
+      username: string;
+      user_id: string;
+      logs: string;
 };
 
 type Cd = {
