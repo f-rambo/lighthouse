@@ -6,8 +6,13 @@ type ChildContainerProps = {
 
 type User = {
       id: string;
-      name: string;
+      username: string;
       email: string;
+      access_token: string;
+      state: string;
+      updated_at: string;
+      sign_type: string;
+      password: string;
 }
 
 

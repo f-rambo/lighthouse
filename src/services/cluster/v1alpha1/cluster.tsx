@@ -1,5 +1,5 @@
 import Cookies from "js-cookie";
-import { handlerResponse, jsonToQueryString } from "../../common";
+import { handlerResponse } from "../../common";
 
 const clusterApi = `${process.env.NEXT_PUBLIC_API ?? ""}${
   process.env.NEXT_PUBLIC_API_VERSION ?? ""
@@ -9,11 +9,10 @@ const tokenKey = process.env.NEXT_PUBLIC_TOKEN ?? "ocean-token";
 export const ClusterServices = {
   async getList() {
     const token = Cookies.get(tokenKey);
-    const res = await fetch(`${clusterApi}/list`, {
+    const res = await fetch(`http://localhost:3000/api/backend/cluster/list`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
       },
     });
     return handlerResponse(res);
