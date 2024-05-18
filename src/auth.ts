@@ -8,7 +8,7 @@ import { cookies } from 'next/headers'
 
 const userApi = `${process.env.NEXT_PUBLIC_API ?? ""}${
   process.env.NEXT_PUBLIC_API_VERSION ?? ""
-}user/`;
+}/user/`;
 
 class InvalidLoginError extends CredentialsSignin {
   code = "Invalid identifier or password"
@@ -39,7 +39,6 @@ const signInFunction = async (email: string, password: string, access_token: str
     body: JSON.stringify(signinRequest),
   });
   const data = await res.json() as adminUser;
-  console.log(data)
   if (!data || !data.access_token){
     return null
   }
@@ -95,7 +94,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return session;
     },
   },
-  // debug: process.env.NODE_ENV !== "production" ? true : false,
+  debug: process.env.NODE_ENV !== "production" ? true : false,
 })
 
 declare module "next-auth" {
