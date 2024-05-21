@@ -75,6 +75,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         if (data) {
             token.id = data.id;
             token.accessToken = data.access_token;
+            token.state = data.state;
         }else {
           throw new InvalidLoginError()
         }
@@ -91,6 +92,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (token?.provider) {
         session.provider = token.provider as string;
       }
+      if (token?.state) {
+        session.state = token.state as string;
+      }
       return session;
     },
   },
@@ -104,6 +108,7 @@ declare module "next-auth" {
     userId?: string
     user?: User
     expires?: string // 2024-06-12T13:47:56.390Z
-    provider: string
+    provider?: string
+    state?: string
   }
 }

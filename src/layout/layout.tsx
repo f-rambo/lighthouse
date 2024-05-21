@@ -9,13 +9,21 @@ import { Session } from "next-auth";
 
 const Layout = async ({ children }: ChildContainerProps) => {
   const session = (await auth()) as Session;
-  const content = !session?.user ? (
-    <div className="flex justify-center items-center h-full">
-      <h3>Please login</h3>
-    </div>
-  ) : (
-    children
-  );
+  let content = children;
+  if (!session || !session.user) {
+    content = (
+      <div className="flex justify-center items-center h-full">
+        <h3>Please login</h3>
+      </div>
+    );
+  }
+  if (session && session.user && session.state !== "enable") {
+    content = (
+      <div className="flex justify-center items-center h-full">
+        <h3>Please enable your account</h3>
+      </div>
+    );
+  }
   return (
     <React.Fragment>
       <div className="grid min-h-screen w-full overflow-hidden lg:grid-cols-[280px_1fr]">
