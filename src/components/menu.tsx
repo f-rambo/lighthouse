@@ -3,12 +3,13 @@ import { ShoppingCartIcon, UsersIcon, PackageIcon } from "@/components/icon";
 import {
   LaptopIcon,
   GlobeIcon,
-  RowsIcon,
+  HandIcon,
   TableIcon,
   TargetIcon,
   Crosshair2Icon,
   RocketIcon,
   DashboardIcon,
+  FaceIcon,
 } from "@radix-ui/react-icons";
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
@@ -36,13 +37,18 @@ export const homeMenu = [
     path: "/home/apprepo",
   },
   {
+    title: "Organisation",
+    icon: FaceIcon,
+    path: "/home/organisation",
+  },
+  {
     title: "Users",
     icon: UsersIcon,
     path: "/home/user",
   },
   {
     title: "Roles",
-    icon: RowsIcon,
+    icon: HandIcon,
     path: "/home/role",
   },
 ];

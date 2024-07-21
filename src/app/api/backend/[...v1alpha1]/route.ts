@@ -103,3 +103,160 @@ export async function DELETE(request: Request) {
    return forwardedResponse;
 }
 
+
+export async function PATCH(request: Request) {
+   const session = await auth() as Session;
+
+   const url = new URL(request.url);
+   url.pathname = url.pathname.replace(/\/.*\/backend/, '');
+   // 构建新的请求
+   const newUrl = backendUrl+url.pathname ; // 新的地址
+   const newHeaders = new Headers(request.headers); // 复制原始请求的headers
+   newHeaders.append('Authorization', session.provider+' '+session.accessToken);
+   newHeaders.append('User-Email', session?.user?.email as string);
+   newHeaders.append('User-Id', session?.userId as string);
+
+   // 发送转发后的请求
+   const forwardedResponse = await fetch(newUrl, {
+     method: 'PATCH',
+     headers: newHeaders,
+     body: await request.clone().text(),
+   });
+
+   // 返回转发后的响应
+   return forwardedResponse;
+}
+
+export async function OPTIONS(request: Request) {
+   const session = await auth() as Session;
+
+   const url = new URL(request.url);
+   url.pathname = url.pathname.replace(/\/.*\/backend/, '');
+   // 构建新的请求
+   const newUrl = backendUrl+url.pathname ; // 新的地址
+   const newHeaders = new Headers(request.headers); // 复制原始请求的headers
+   newHeaders.append('Authorization', session.provider+' '+session.accessToken);
+   newHeaders.append('User-Email', session?.user?.email as string);
+   newHeaders.append('User-Id', session?.userId as string);
+
+   // 发送转发后的请求
+   const forwardedResponse = await fetch(newUrl, {
+     method: 'OPTIONS',
+     headers: newHeaders,
+   });
+
+   // 返回转发后的响应
+   return forwardedResponse;
+}
+
+export async function HEAD(request: Request) {
+   const session = await auth() as Session;
+
+   const url = new URL(request.url);
+   url.pathname = url.pathname.replace(/\/.*\/backend/, '');
+   // 构建新的请求
+   const newUrl = backendUrl+url.pathname ; // 新的地址
+   const newHeaders = new Headers(request.headers); // 复制原始请求的headers
+   newHeaders.append('Authorization', session.provider+' '+session.accessToken);
+   newHeaders.append('User-Email', session?.user?.email as string);
+   newHeaders.append('User-Id', session?.userId as string);
+
+   // 发送转发后的请求
+   const forwardedResponse = await fetch(newUrl, {
+     method: 'HEAD',
+     headers: newHeaders,
+   });
+
+   // 返回转发后的响应
+   return forwardedResponse;
+}
+
+export async function TRACE(request: Request) {
+   const session = await auth() as Session;
+
+   const url = new URL(request.url);
+   url.pathname = url.pathname.replace(/\/.*\/backend/, '');
+   // 构建新的请求
+   const newUrl = backendUrl+url.pathname ; // 新的地址
+   const newHeaders = new Headers(request.headers); // 复制原始请求的headers
+   newHeaders.append('Authorization', session.provider+' '+session.accessToken);
+   newHeaders.append('User-Email', session?.user?.email as string);
+   newHeaders.append('User-Id', session?.userId as string);
+
+   // 发送转发后的请求
+   const forwardedResponse = await fetch(newUrl, {
+     method: 'TRACE',
+     headers: newHeaders,
+   });
+
+   // 返回转发后的响应
+   return forwardedResponse;
+}
+
+export async function CONNECT(request: Request) {
+   const session = await auth() as Session;
+
+   const url = new URL(request.url);
+   url.pathname = url.pathname.replace(/\/.*\/backend/, '');
+   // 构建新的请求
+   const newUrl = backendUrl+url.pathname ; // 新的地址
+   const newHeaders = new Headers(request.headers); // 复制原始请求的headers
+   newHeaders.append('Authorization', session.provider+' '+session.accessToken);
+   newHeaders.append('User-Email', session?.user?.email as string);
+   newHeaders.append('User-Id', session?.userId as string);
+
+   // 发送转发后的请求
+   const forwardedResponse = await fetch(newUrl, {
+     method: 'CONNECT',
+     headers: newHeaders,
+   });
+
+   // 返回转发后的响应
+   return forwardedResponse;
+}
+
+export async function PROPFIND(request: Request) {
+   const session = await auth() as Session;
+
+   const url = new URL(request.url);
+   url.pathname = url.pathname.replace(/\/.*\/backend/, '');
+   // 构建新的请求
+   const newUrl = backendUrl+url.pathname ; // 新的地址
+   const newHeaders = new Headers(request.headers); // 复制原始请求的headers
+   newHeaders.append('Authorization', session.provider+' '+session.accessToken);
+   newHeaders.append('User-Email', session?.user?.email as string);
+   newHeaders.append('User-Id', session?.userId as string);
+
+   // 发送转发后的请求
+   const forwardedResponse = await fetch(newUrl, {
+     method: 'PROPFIND',
+     headers: newHeaders,
+   });
+
+   // 返回转发后的响应
+   return forwardedResponse;
+}
+
+export async function PROPPATCH(request: Request) {
+   const session = await auth() as Session;
+
+   const url = new URL(request.url);
+   url.pathname = url.pathname.replace(/\/.*\/backend/, '');
+   // 构建新的请求
+   const newUrl = backendUrl+url.pathname ; // 新的地址
+   const newHeaders = new Headers(request.headers); // 复制原始请求的headers
+   newHeaders.append('Authorization', session.provider+' '+session.accessToken);
+   newHeaders.append('User-Email', session?.user?.email as string);
+   newHeaders.append('User-Id', session?.userId as string);
+
+   // 发送转发后的请求
+   const forwardedResponse = await fetch(newUrl, {
+     method: 'PROPPATCH',
+     headers: newHeaders,
+   });
+
+   // 返回转发后的响应
+   return forwardedResponse;
+
+}
+

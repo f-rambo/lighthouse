@@ -4,8 +4,9 @@ import {
   CaretSortIcon,
   ChevronDownIcon,
   DotsHorizontalIcon,
-  CheckIcon,
   Cross2Icon,
+  DoubleArrowDownIcon,
+  CheckIcon,
 } from "@radix-ui/react-icons";
 import {
   ColumnDef,
@@ -43,6 +44,53 @@ import { Cluster } from "@/types/types";
 import { useToast } from "@/components/ui/use-toast";
 import { useRouter } from "next/navigation";
 import { ClusterServices } from "@/services/cluster/v1alpha1/cluster";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogClose,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+
+const clusterTypes = [
+  {
+    value: "aws",
+    label: "AWS Cloud",
+  },
+  {
+    value: "azure",
+    label: "Azure Cloud",
+  },
+  {
+    value: "google",
+    label: "Google Cloud",
+  },
+  {
+    value: "kubernetes",
+    label: "Kubernetes",
+  },
+  {
+    value: "customizable",
+    label: "Customizable",
+  },
+];
 
 export default function ClusterListPage() {
   const router = useRouter();
@@ -54,8 +102,9 @@ export default function ClusterListPage() {
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
-
   const [data, setData] = React.useState<Cluster[]>([]);
+  const [openClusterType, setOpenClusterType] = React.useState(false);
+  const [clusterTypeValue, setClusterTypeValue] = React.useState("");
 
   const refreshClusterList = React.useCallback(() => {
     ClusterServices.getList().then((data) => {
@@ -344,14 +393,99 @@ export default function ClusterListPage() {
               })}
           </DropdownMenuContent>
         </DropdownMenu>
-        <Button
-          variant="outline"
-          onClick={() => {
-            router.push("/home/cluster/new");
-          }}
-        >
-          Add New
-        </Button>
+
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button variant="outline">New</Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>New Cluster</DialogTitle>
+              <DialogDescription>Select a cluster type</DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label className="text-right">Cluster Type</Label>
+                <Popover
+                  open={openClusterType}
+                  onOpenChange={setOpenClusterType}
+                >
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={openClusterType}
+                      className="w-[300px] justify-between"
+                    >
+                      {clusterTypeValue
+                        ? clusterTypes.find(
+                            (clustertype) =>
+                              clustertype.value === clusterTypeValue
+                          )?.label
+                        : "Select cluster type..."}
+                      <DoubleArrowDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[300px] p-0">
+                    <Command>
+                      <CommandInput placeholder="Search cluster type..." />
+                      <CommandEmpty>No cluster type found.</CommandEmpty>
+                      <CommandGroup>
+                        {clusterTypes.map((clusterType) => (
+                          <CommandItem
+                            key={clusterType.value}
+                            value={clusterType.value}
+                            onSelect={(currentValue) => {
+                              setClusterTypeValue(
+                                currentValue === clusterTypeValue
+                                  ? ""
+                                  : currentValue
+                              );
+                              setOpenClusterType(false);
+                            }}
+                          >
+                            <CheckIcon
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                clusterTypeValue === clusterType.value
+                                  ? "opacity-100"
+                                  : "opacity-0"
+                              )}
+                            />
+                            {clusterType.label}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button
+                  onClick={() => {
+                    if (clusterTypeValue === "") {
+                      toast({
+                        title: "Please select a cluster type",
+                        variant: "destructive",
+                        description:
+                          "Please select a cluster type to create a new cluster",
+                      });
+                      return;
+                    }
+                    if (clusterTypeValue === "customizable") {
+                      router.push(`cluster/new`);
+                    }
+                    setClusterTypeValue("");
+                  }}
+                >
+                  Next
+                </Button>
+              </DialogClose>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
       <div className="rounded-md border">
         <Table>
@@ -424,8 +558,6 @@ export default function ClusterListPage() {
                 const selectedIds = table
                   .getFilteredSelectedRowModel()
                   .rows.map((row) => row.id);
-                // Use selectedIds for further processing
-                console.log(selectedIds);
               }}
             >
               Delete selected

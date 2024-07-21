@@ -29,7 +29,7 @@ export default function NotFound() {
             </div>
             <div className="w-full max-w-sm space-y-2">
               <Button type="button">
-                <Link href="/cluster">Return Home</Link>
+                <Link href="/home">Return Home</Link>
               </Button>
             </div>
           </div>

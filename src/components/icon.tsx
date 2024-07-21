@@ -22,7 +22,6 @@ export const IconMap = {
   arrowLeft: ArrowLeftIcon,
   package2: Package2Icon,
   users: UsersIcon,
-  role: RoleIcon,
   key: KeyIcon,
   gitBranch: GitBranchIcon,
   shoppingCart: ShoppingCartIcon,
@@ -178,27 +177,6 @@ export function UsersIcon(props: any) {
       <circle cx="9" cy="7" r="4" />
       <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
       <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-    </svg>
-  );
-}
-
-export function RoleIcon(props: any) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M7 10a4 4 0 0 1 0 8" />
-      <path d="M17 10a4 4 0 0 1 0 8" />
-      <path d="M3 15h18" />
     </svg>
   );
 }
